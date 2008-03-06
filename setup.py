@@ -57,9 +57,18 @@ setup(name='gp.ldap',
       install_requires=[
           'setuptools',
           # -*- Extra requirements: -*-
+          'gp.config',
+          'zope.app.container',
+          'ldapadapter',
       ],
       entry_points="""
       # -*- Entry points: -*-
+      [console_scripts]
+      ldapgrep = gp.ldap.scripts:grep
+      ldapcat = gp.ldap.scripts:cat
+
+      [paste.app_factory]
+      ldap = gp.ldap.wsgi:factory
       """,
       )
 
