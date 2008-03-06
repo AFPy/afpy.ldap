@@ -18,7 +18,8 @@ from ldapadapter.interfaces import InvalidCredentials
 import gp.config.parsers
 
 IGNORE_KEYS=['uid', 'cn', 'sn', 'givenName',
-             'userPassword', 'objectClass']
+             'userPassword', 'objectClass',
+             'jpegPhoto']
 
 def get(section=None):
     return LDAP(section or 'default')
@@ -26,10 +27,14 @@ def get(section=None):
 def pprint(ldiff):
     def format(x,y):
         if isinstance(y, list):
-            y = u'\n'.join(y)
+            try:
+                y = '\n'.join([s.encode('iso-8859-1','replace') for s in y])
+            except UnicodeDecodeError:
+                print 'XXX',x
+                print '%r' % y
         if isinstance(y, unicode):
             y = y.encode('iso-8859-1')
-        print '%s%s%s' % (x,' '*(10-len(x)),y)
+        print '%s%s%s' % (x,' '*(20-len(x)),y)
     dn, datas = ldiff
     cn = ' '.join(datas['cn'])
     print ''

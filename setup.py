@@ -64,8 +64,7 @@ setup(name='gp.ldap',
       entry_points="""
       # -*- Entry points: -*-
       [console_scripts]
-      ldapgrep = gp.ldap.scripts:grep
-      ldapcat = gp.ldap.scripts:cat
+      ldapgrep = gp.ldap.scripts:main
 
       [paste.app_factory]
       ldap = gp.ldap.wsgi:factory
