@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from paste.deploy.config import ConfigMiddleware
 from paste.deploy import CONFIG
+from paste.auth.basic import AuthBasicHandler
 from paste.fileapp import FileApp
 import gp.ldap
 import ConfigParser
@@ -50,6 +51,11 @@ def application(environ, start_response):
     start_response('200 OK', [('Content-Type', 'text/html;charset=utf-8')])
     return out
 
+def ldap_auth(self, username, password):
+    if not username or not password:
+        return False
+    adapter = gp.ldap.get()
+    return adapter.checkCredentials(username, password)
 
 def factory(global_config, **local_config):
     """aplication factory to expand configs
@@ -58,4 +64,5 @@ def factory(global_config, **local_config):
     conf.update(**local_config)
     app = application
     app = ConfigMiddleware(app, conf)
+    app = AuthBasicHandler(app, 'ldap', ldap_auth)
     return app

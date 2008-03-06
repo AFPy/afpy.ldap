@@ -14,6 +14,7 @@
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ldapadapter.utility import LDAPAdapter
+from ldapadapter.interfaces import InvalidCredentials
 import gp.config.parsers
 
 IGNORE_KEYS=['uid', 'cn', 'sn', 'givenName',
@@ -85,6 +86,15 @@ class LDAP(LDAPAdapter):
         dn = self.get('username')
         dn = ','.join(dn.split(',')[-3:])
         return dn
+
+    def checkCredentials(self, cn, password):
+        uid = self.get('username').split('=')[0]
+        dn = '%s=%s,%s' % (uid, cn, self.base_dn)
+        try:
+            self.connect(dn, password)
+        except InvalidCredentials:
+            return False
+        return True
 
     def __repr__(self):
         return '<LDAP at %s>' % self.get('host', 'localhost')
