@@ -65,9 +65,10 @@ def xhtml(ldiff):
 class LDAP(LDAPAdapter):
     def __init__(self, section):
         self.section = section
-        super(LDAP, self).__init__(self.get('host', 'localhost'),
-                                   int(self.get('port', 389)))
-
+        host = self.get('host', 'localhost')
+        port = int(self.get('port', 389))
+        useSSL = port == 636
+        super(LDAP, self).__init__(host, port, useSSL=useSSL)
 
     @property
     def config(self):

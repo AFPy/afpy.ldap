@@ -19,7 +19,7 @@ def grep(section, arg):
     conn = adapter.getConnection()
     results = conn.search(adapter.base_dn,
                           'sub', '(%s)' % arg)
-    for result in results:
+    for result in sorted(results):
         gp.ldap.pprint(result)
 
 def cat(section):
