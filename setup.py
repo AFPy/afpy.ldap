@@ -22,11 +22,7 @@ from setuptools import setup, find_packages
 
 version = '0.1'
 
-README = os.path.join(os.path.dirname(__file__),
-          'gp',
-          'ldap', 'docs', 'README.txt')
-
-long_description = open(README).read() + '\n\n'
+long_description = ''
 
 setup(name='gp.ldap',
       version=version,
@@ -56,7 +52,7 @@ setup(name='gp.ldap',
       ldapgrep = gp.ldap.scripts:main
 
       [paste.app_factory]
-      ldap = gp.ldap.wsgi:factory
+      main = gp.ldap.wsgi:factory
       """,
       )
 
