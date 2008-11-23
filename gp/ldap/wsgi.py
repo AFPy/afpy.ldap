@@ -29,7 +29,7 @@ def index():
 def application(environ, start_response):
     """an application to render a ldap search
     """
-    if 'REMOTE_USER' not in environ:
+    if environ.get('REMOTE_USER', None) != 'gawel':
         return exc.HTTPForbidden()(environ, start_response)
 
     req = Request(environ)
