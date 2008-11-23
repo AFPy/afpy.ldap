@@ -65,23 +65,21 @@ IGNORE_KEYS=['uid', 'cn', 'sn', 'givenName',
 def get(section=None):
     return LDAP(section or 'default')
 
-def pprint(ldiff):
+def pprint(datas):
     def format(x,y):
         if isinstance(y, list):
             try:
-                y = '\n'.join([s.encode('iso-8859-1','replace') for s in y])
+                y = '\n'.join([s for s in y])
             except UnicodeDecodeError:
                 print 'XXX',x
                 print '%r' % y
         if isinstance(y, unicode):
             y = y.encode('iso-8859-1')
         print '%s%s%s' % (x,' '*(20-len(x)),y)
-    dn, datas = ldiff
     cn = ' '.join(datas['cn'])
     print ''
     print cn
     print '='*len(cn)
-    format('dn', dn)
     keys = [k for k in datas if k not in IGNORE_KEYS]
     for key in keys:
         format(key, datas[key])
@@ -104,7 +102,7 @@ def xhtml(ldiff):
     return ''.join(out)
 
 class LDAP(object):
-    def __init__(self, section='ldap', filename=os.path.expanduser('~/.ldap.cfg')):
+    def __init__(self, section='default', filename=os.path.expanduser('~/.ldap.cfg')):
         self.config = ConfigParser()
         self.config.read([filename])
         self.section = section
