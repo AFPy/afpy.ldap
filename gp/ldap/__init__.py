@@ -90,13 +90,13 @@ def xhtml(datas):
             y = '\n'.join(y)
         if isinstance(y, str):
             y = y
-        return '<dd><label>%s:</label> <span>%s</span></dd>' % (x,y)
+        return '<div><label>%s:</label> <span>%s</span></div>' % (x,y)
     cn = ' '.join(datas['cn']).encode('utf-8')
-    out = ['<dl class="ldiff"><dt>%s</dt>' % cn]
+    out = ['<div class="ldiff"><h3>%s</h3><div class="ldiff_body">' % cn]
     keys = [k for k in datas if k not in IGNORE_KEYS]
     for key in keys:
         out.append(format(key, datas[key]))
-    out.append('</dl>')
+    out.append('</div></div>')
     return ''.join(out)
 
 class LDAP(object):

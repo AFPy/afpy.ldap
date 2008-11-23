@@ -16,8 +16,10 @@ def index():
            '<script src="./js/jquery.js" type="text/javascript"></script>',
            '<script src="./js/ldap.js" type="text/javascript"></script>',
            '<style type="text/css">'
-           '\n#ldap_contents dd {margin:0;padding:0}',
-           '\n#ldap_contents dd label {width:50%;}',
+           '\n#ldap_links {text-align:center;}',
+           '\n#ldap_contents {margin:1em 10%; padding:0}',
+           '\n#ldap_contents label {width:50%;}',
+           '\n.ldiff {margin:1em 0; padding:0}',
            '\n</style>',
            '</head><body><div id="ldap_links">']
     for l in string.ascii_letters[26:]:
