@@ -45,6 +45,8 @@ setup(name='gp.ldap',
       install_requires=[
           'setuptools',
           # -*- Extra requirements: -*-
+          'WebOb',
+          'dataflake.ldapconnection',
       ],
       entry_points="""
       # -*- Entry points: -*-
