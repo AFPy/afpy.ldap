@@ -28,10 +28,6 @@ README = os.path.join(os.path.dirname(__file__),
 
 long_description = open(README).read() + '\n\n'
 
-tests_require = [
-        'zope.testing',
-    ]
-
 setup(name='gp.ldap',
       version=version,
       description="The gp.ldap package",
@@ -50,16 +46,9 @@ setup(name='gp.ldap',
       namespace_packages=['gp'],
       include_package_data=True,
       zip_safe=False,
-      # uncomment this to be able to run tests with setup.py
-      #test_suite = "gp.ldap.tests.test_ldapdocs.test_suite",
-      tests_require=tests_require,
-      extras_require=dict(test=tests_require),
       install_requires=[
           'setuptools',
           # -*- Extra requirements: -*-
-          'gp.config',
-          'zope.app.container',
-          'ldapadapter',
       ],
       entry_points="""
       # -*- Entry points: -*-

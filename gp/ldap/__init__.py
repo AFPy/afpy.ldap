@@ -13,9 +13,50 @@
 #You should have received a copy of the GNU General Public License
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ldapadapter.utility import LDAPAdapter
-from ldapadapter.interfaces import InvalidCredentials
-import gp.config.parsers
+from dataflake.ldapconnection.connection import LDAPConnection
+from ConfigParser import ConfigParser
+import ldap
+import os
+
+
+
+
+def ldapconnection_from_config(config, prefix='ldap.', **kwargs):
+    """This is useful to get an LDAPConnection from a ConfigParser section
+    items.
+    """
+    options = dict(
+            host='localhost',
+            port = 386,
+            protocol = 'ldap',
+            c_factory = ldap.initialize,
+            login_attr='',
+            rdn_attr='',
+            bind_dn='',
+            bind_pwd='',
+            read_only=0,
+            conn_timeout=-1,
+            op_timeout=-1)
+
+    options.update(kwargs)
+
+    for key, value in config.items():
+        if prefix in key:
+            k = key.replace(prefix, '')
+            if k in options:
+                if isinstance(options[k], int):
+                    try:
+                        value = int(value)
+                    except (TypeError, ValueError):
+                        raise TypeError(
+                           '%s must be an integer. Got %s' % (key, value))
+                options[k] = value
+
+    if not callable(options['c_factory']):
+        raise TypeError(
+           'c_factory must be callable. Got %(c_factory)s' % options)
+
+    return LDAPConnection(**options)
 
 IGNORE_KEYS=['uid', 'cn', 'sn', 'givenName',
              'userPassword', 'objectClass',
@@ -62,17 +103,15 @@ def xhtml(ldiff):
     out.append('</dl>')
     return ''.join(out)
 
-class LDAP(LDAPAdapter):
-    def __init__(self, section):
+class LDAP(object):
+    def __init__(self, section='ldap', filename=os.path.expanduser('~/.ldap.cfg')):
+        self.config = ConfigParser()
+        self.config.read([filename])
         self.section = section
-        host = self.get('host', 'localhost')
-        port = int(self.get('port', 389))
-        useSSL = port == 636
-        super(LDAP, self).__init__(host, port, useSSL=useSSL)
+        self._conn = self.connection_factory()
+        self.bind_dn = self.get('bind_dn')
+        self.bind_pw = self.get('bind_pw')
 
-    @property
-    def config(self):
-        return gp.config.parsers.read('ldap')
 
     def get(self, key, default=None):
         try:
@@ -80,27 +119,33 @@ class LDAP(LDAPAdapter):
         except KeyError:
             return default
 
-    def getConnection(self, user=None, passwd=None):
-        if user is None:
-            user, passwd = self.config.userinfos(self.section)
-        elif not user:
-            return self.connect()
-        return self.connect(user, passwd)
+    def connection_factory(self, user=None, passwd=None):
+        config = dict(self.config.items(self.section))
+        conn = ldapconnection_from_config(config)
+        ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
+        ldap.set_option(ldap.OPT_REFERRALS, 0)
+        return conn
 
     @property
     def base_dn(self):
-        dn = self.get('username')
+        dn = self.get('bind_dn')
         dn = ','.join(dn.split(',')[-3:])
         return dn
 
     def checkCredentials(self, cn, password):
-        uid = self.get('username').split('=')[0]
+        uid = self.get('bind_dn').split('=')[0]
         dn = '%s=%s,%s' % (uid, cn, self.base_dn)
         try:
-            self.connect(dn, password)
-        except InvalidCredentials:
+            self.connection_factory().connect(dn, password)
+        except ldap.INVALID_CREDENTIALS, e:
             return False
         return True
 
-    def __repr__(self):
-        return '<LDAP at %s>' % self.get('host', 'localhost')
+    def search(self, *args, **kwargs):
+        return self._conn.search(self.base_dn,
+                                 ldap.SCOPE_SUBTREE,
+                                 bind_dn=self.bind_dn,
+                                 bind_pwd=self.bind_pw,
+                                 *args, **kwargs)
+
+
