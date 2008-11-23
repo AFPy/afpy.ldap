@@ -128,7 +128,7 @@ class LDAP(object):
         dn = ','.join(dn.split(',')[-3:])
         return dn
 
-    def checkCredentials(self, cn, password):
+    def check(self, cn, password):
         uid = self.get('bind_dn').split('=')[0]
         dn = '%s=%s,%s' % (uid, cn, self.base_dn)
         try:
