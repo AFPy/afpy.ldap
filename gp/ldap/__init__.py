@@ -84,17 +84,15 @@ def pprint(datas):
     for key in keys:
         format(key, datas[key])
 
-def xhtml(ldiff):
+def xhtml(datas):
     def format(x,y):
         if isinstance(y, list):
-            y = u'\n'.join(y)
-        if isinstance(y, unicode):
-            y = y.encode('utf-8')
+            y = '\n'.join(y)
+        if isinstance(y, str):
+            y = y
         return '<dd><label>%s:</label> <span>%s</span></dd>' % (x,y)
-    dn, datas = ldiff
-    cn = u' '.join(datas['cn']).encode('utf-8')
+    cn = ' '.join(datas['cn']).encode('utf-8')
     out = ['<dl class="ldiff"><dt>%s</dt>' % cn]
-    format('dn', dn)
     keys = [k for k in datas if k not in IGNORE_KEYS]
     for key in keys:
         out.append(format(key, datas[key]))
