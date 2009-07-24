@@ -24,11 +24,12 @@ def test_normalized_data():
 def test_user():
     assert 'person' in user.objectClass
 
-    assert user._uid in user.dn, user.dn
+    assert user._dn == user.dn, user.dn
 
     phone = '+33144530555'
     user.homePhone = '+34'
     user.save()
+    assert user.homePhone == '+34', user._data
 
 
 app = TestApp(gp.ldap.wsgi.application)

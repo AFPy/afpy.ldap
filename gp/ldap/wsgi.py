@@ -50,7 +50,7 @@ def application(environ, start_response):
         return app(environ, start_response)
 
     if len(filename) == 1:
-        conn = gp.ldap.get('default')
+        conn = gp.ldap.get_conn('ldap')
         results = conn.search('(cn=%s*)' % filename)['results']
         out = [gp.ldap.xhtml(r) for r in results]
         resp.charset='utf-8'

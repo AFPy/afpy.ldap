@@ -14,13 +14,11 @@
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from dataflake.ldapconnection.connection import LDAPConnection
-from ConfigParser import ConfigParser
+from dataflake.ldapconnection.utils import to_utf8
+from ConfigObject import ConfigObject
 from ConfigParser import NoOptionError
 import ldap
 import os
-
-
-
 
 def ldapconnection_from_config(config, prefix='ldap.', **kwargs):
     """This is useful to get an LDAPConnection from a ConfigParser section
@@ -40,7 +38,6 @@ def ldapconnection_from_config(config, prefix='ldap.', **kwargs):
             op_timeout=-1)
 
     options.update(kwargs)
-
     for key, value in config.items():
         if prefix in key:
             k = key.replace(prefix, '')
@@ -63,8 +60,8 @@ IGNORE_KEYS=['uid', 'cn', 'sn', 'givenName',
              'userPassword', 'objectClass',
              'jpegPhoto']
 
-def get(section=None):
-    return LDAP(section or 'default')
+def get_conn(section='ldap', prefix='ldap.', filename=os.path.expanduser('~/.ldap.cfg')):
+    return LDAP(section=section, prefix=prefix, filename=filename)
 
 def pprint(datas):
     def format(x,y):
@@ -100,38 +97,92 @@ def xhtml(datas):
     out.append('</div></div>')
     return ''.join(out)
 
+class User(object):
+
+    def __init__(self, uid=None, dn=None, conn=None):
+        self._conn = conn or get_conn()
+        self._dn = dn and dn or self._conn.mask_dn.replace('{uid}', uid)
+        self._data = None
+        self._new_data = {}
+
+    def bind(self, conn):
+        self._conn = conn
+
+    def check(self, password):
+        return self._conn.check(self._dn, password)
+
+    def normalized_data(self):
+        if self._data:
+            return self._data
+        self._data = {}
+        data = self._conn.get_dn(self._dn)
+        results = data.get('results', {})
+        if len(results) == 1:
+            for k, v in results[0].items():
+                if len(v) == 1:
+                    v = v[0]
+                self._data[k] = v
+
+        return self._data
+
+    def save(self):
+        if self._data and 'dn' in self._data:
+            data = self._new_data.copy()
+            self._data = None
+            self._new_data = {}
+            mod_list = []
+            for k, v in data.items():
+                if isinstance(v, (tuple, list)):
+                    v = map(to_utf8, v)
+                else:
+                    v = [to_utf8(v)]
+                mod_list.append((ldap.MOD_REPLACE, k, v))
+            conn = self._conn._conn.connect()
+            conn.modify_s(self._dn, mod_list)
+
+    def __getattr__(self, attr):
+        return self.normalized_data().get(attr, None)
+
+    def __setattr__(self, attr, value):
+        if attr.startswith('_'):
+            object.__setattr__(self, attr, value)
+        else:
+            data = self.normalized_data()
+            data[attr] = value
+            self._new_data[attr] = value
 class LDAP(object):
-    def __init__(self, section='default', filename=os.path.expanduser('~/.ldap.cfg')):
-        self.config = ConfigParser()
-        self.config.read([filename])
-        self.section = section
+    def __init__(self, section='ldap', prefix='ldap.', filename=os.path.expanduser('~/.ldap.cfg')):
+        config = ConfigObject()
+        config.read([filename])
+        self.prefix = prefix
+        self.section = config[section]
         self._conn = self.connection_factory()
-        self.bind_dn = self.get('bind_dn')
-        self.bind_pw = self.get('bind_pw')
+        try:
+            self.bind_dn = self.get('bind_dn')
+            self.bind_pw = self.get('bind_pw')
+            self.base_dn = self.get('base_dn', self.bind_dn.split(',', 1)[1])
+            self.mask_dn = self.get('mask_dn', 'uid={uid},%s' % self.base_dn)
+        except Exception, e:
+            raise e.__class__('Invalid configuration %s - %s' % (section, self.section))
 
 
     def get(self, key, default=None):
         try:
-            return self.config.get(self.section, key)
+            return self.section[self.prefix+key]
         except (NoOptionError, KeyError):
             return default
 
     def connection_factory(self, user=None, passwd=None):
-        config = dict(self.config.items(self.section))
-        conn = ldapconnection_from_config(config)
-        ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
-        ldap.set_option(ldap.OPT_REFERRALS, 0)
+        config = dict(self.section.items())
+        conn = ldapconnection_from_config(config, prefix=self.prefix)
+        if conn.server.get('protocol') == 'ldaps':
+            ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
+            ldap.set_option(ldap.OPT_REFERRALS, 0)
         return conn
 
-    @property
-    def base_dn(self):
-        dn = self.get('bind_dn')
-        dn = dn.split(',', 1)[1]
-        return dn
-
     def check(self, cn, password):
-        uid = self.get('bind_dn').split('=')[0]
-        dn = '%s=%s,%s' % (uid, cn, self.base_dn)
+        uid = self.bind_dn.split('=')[0]
+        dn = self.mask_dn.replace('{uid}', cn)
         try:
             self.connection_factory().connect(dn, password)
         except ldap.INVALID_CREDENTIALS, e:
@@ -145,42 +196,12 @@ class LDAP(object):
                                  bind_pwd=self.bind_pw,
                                  *args, **kwargs)
 
+    def get_dn(self, dn):
+        return self._conn.search(dn,
+                                 ldap.SCOPE_BASE,
+                                 bind_dn=self.bind_dn,
+                                 bind_pwd=self.bind_pw)
 
-class User(object):
+    def get_user(self, uid=None, dn=None):
+        return User(uid=uid, dn=dn, conn=self)
 
-    def __init__(self, uid, section=None):
-        self._uid = uid
-        self._conn = get(section)
-        self._data = None
-
-    def check(self, password):
-        return self._conn.check(self._uid, password)
-
-    def normalized_data(self):
-        if self._data:
-            return self._data
-        self._data = {}
-        uid = self._conn.get('bind_dn').split('=')[0]
-        filter = self._conn.get('search_filter', '(uid={uid})').replace('{uid}', self._uid)
-        data = self._conn.search(filter=filter)
-        results = data.get('results', {})
-        if len(results) == 1:
-            for k, v in results[0].items():
-                if len(v) == 1:
-                    v = v[0]
-                self._data[k] = v
-
-        return self._data
-
-    def save(self):
-        self._conn._conn.modify(self.dn, attrs=self._data)
-
-    def __getattr__(self, attr):
-        return self.normalized_data().get(attr, None)
-
-    def __setattr__(self, attr, value):
-        if attr.startswith('_'):
-            object.__setattr__(self, attr, value)
-        else:
-            data = self.normalized_data()
-            data[attr] = value
