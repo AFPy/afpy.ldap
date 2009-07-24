@@ -46,6 +46,7 @@ setup(name='gp.ldap',
           'setuptools',
           # -*- Extra requirements: -*-
           'WebOb',
+          'WebTest',
           'dataflake.ldapconnection',
       ],
       entry_points="""

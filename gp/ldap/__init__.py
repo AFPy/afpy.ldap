@@ -15,6 +15,7 @@
 
 from dataflake.ldapconnection.connection import LDAPConnection
 from ConfigParser import ConfigParser
+from ConfigParser import NoOptionError
 import ldap
 import os
 
@@ -112,7 +113,7 @@ class LDAP(object):
     def get(self, key, default=None):
         try:
             return self.config.get(self.section, key)
-        except KeyError:
+        except (NoOptionError, KeyError):
             return default
 
     def connection_factory(self, user=None, passwd=None):
@@ -125,7 +126,7 @@ class LDAP(object):
     @property
     def base_dn(self):
         dn = self.get('bind_dn')
-        dn = ','.join(dn.split(',')[-3:])
+        dn = dn.split(',', 1)[1]
         return dn
 
     def check(self, cn, password):
@@ -145,3 +146,41 @@ class LDAP(object):
                                  *args, **kwargs)
 
 
+class User(object):
+
+    def __init__(self, uid, section=None):
+        self._uid = uid
+        self._conn = get(section)
+        self._data = None
+
+    def check(self, password):
+        return self._conn.check(self._uid, password)
+
+    def normalized_data(self):
+        if self._data:
+            return self._data
+        self._data = {}
+        uid = self._conn.get('bind_dn').split('=')[0]
+        filter = self._conn.get('search_filter', '(uid={uid})').replace('{uid}', self._uid)
+        data = self._conn.search(filter=filter)
+        results = data.get('results', {})
+        if len(results) == 1:
+            for k, v in results[0].items():
+                if len(v) == 1:
+                    v = v[0]
+                self._data[k] = v
+
+        return self._data
+
+    def save(self):
+        self._conn._conn.modify(self.dn, attrs=self._data)
+
+    def __getattr__(self, attr):
+        return self.normalized_data().get(attr, None)
+
+    def __setattr__(self, attr, value):
+        if attr.startswith('_'):
+            object.__setattr__(self, attr, value)
+        else:
+            data = self.normalized_data()
+            data[attr] = value
