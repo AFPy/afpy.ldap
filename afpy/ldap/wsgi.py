@@ -2,7 +2,7 @@
 from webob import Request, Response, exc
 from paste.deploy import CONFIG
 from paste.fileapp import FileApp
-import gp.ldap
+import afpy.ldap
 import string
 import os
 
@@ -50,9 +50,9 @@ def application(environ, start_response):
         return app(environ, start_response)
 
     if len(filename) == 1:
-        conn = gp.ldap.get_conn('ldap')
-        results = conn.search('(cn=%s*)' % filename)['results']
-        out = [gp.ldap.xhtml(r) for r in results]
+        conn = afpy.ldap.get_conn('ldap')
+        results = conn.search(filter='(cn=%s*)' % filename)
+        out = [afpy.ldap.xhtml(r) for r in results]
         resp.charset='utf-8'
         body = ''.join(out)
         body = body.decode('iso-8859-1')
