@@ -26,7 +26,7 @@ def ldapconnection_from_config(config, prefix='ldap.', **kwargs):
     """
     options = dict(
             host='localhost',
-            port = 386,
+            port = 389,
             protocol = 'ldap',
             c_factory = ldap.initialize,
             login_attr='',
@@ -97,7 +97,7 @@ def xhtml(datas):
     out.append('</div></div>')
     return ''.join(out)
 
-class User(object):
+class Node(object):
 
     def __init__(self, uid=None, dn=None, conn=None):
         self._conn = conn or get_conn()
@@ -140,6 +140,9 @@ class User(object):
             conn = self._conn._conn.connect()
             conn.modify_s(self._dn, mod_list)
 
+    def _groups(self):
+        return self._conn.get_groups(self._dn)
+
     def __getattr__(self, attr):
         return self.normalized_data().get(attr, None)
 
@@ -150,17 +153,19 @@ class User(object):
             data = self.normalized_data()
             data[attr] = value
             self._new_data[attr] = value
+
 class LDAP(object):
     def __init__(self, section='ldap', prefix='ldap.', filename=os.path.expanduser('~/.ldap.cfg')):
-        config = ConfigObject()
-        config.read([filename])
+        self.config = ConfigObject()
+        self.config.read([filename])
         self.prefix = prefix
-        self.section = config[section]
+        self.section = self.config[section]
         self._conn = self.connection_factory()
         try:
             self.bind_dn = self.get('bind_dn')
             self.bind_pw = self.get('bind_pw')
             self.base_dn = self.get('base_dn', self.bind_dn.split(',', 1)[1])
+            self.group_dn = self.get('group_dn', self.base_dn)
             self.mask_dn = self.get('mask_dn', 'uid={uid},%s' % self.base_dn)
         except Exception, e:
             raise e.__class__('Invalid configuration %s - %s' % (section, self.section))
@@ -202,6 +207,14 @@ class LDAP(object):
                                  bind_dn=self.bind_dn,
                                  bind_pwd=self.bind_pw)
 
-    def get_user(self, uid=None, dn=None):
-        return User(uid=uid, dn=dn, conn=self)
+    def get_groups(self, dn):
+        filter = '(&(objectClass=groupOfNames)(member=%s))' % self._dn
+        return self._conn.search(self.group_dn,
+                                 ldap.SCOPE_SUBTREE,
+                                 filter=filter,
+                                 bind_dn=self.bind_dn,
+                                 bind_pwd=self.bind_pw)
+
+    def get_node(self, uid=None, dn=None):
+        return Node(uid=uid, dn=dn, conn=self)
 
