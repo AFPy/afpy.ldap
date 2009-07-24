@@ -6,8 +6,8 @@ import afpy.ldap.utils
 import afpy.ldap.wsgi
 from webtest import TestApp
 
-ldap = afpy.ldap.LDAP()
-ldap = afpy.ldap.LDAP(section=ldap.config.tests.section)
+ldap = afpy.ldap.Connection()
+ldap = afpy.ldap.Connection(section=ldap.config.tests.section)
 
 def test_datetime_serializer():
     date = afpy.ldap.utils.to_python('20100504122300Z', klass=datetime.datetime)
@@ -54,13 +54,13 @@ def test_user():
 
     phone = user.homePhone
     user.homePhone = '+34'
-    assert user.save() is True, user.save()
+    assert ldap.save(user) is True, user.save()
 
     user = ldap.get_user(ldap.config.tests.uid)
     assert user.homePhone == '+34', user._data
 
     user.homePhone = phone
-    user.save()
+    ldap.save(user)
 
 def test_groups():
     user = ldap.get_user(ldap.config.tests.uid)

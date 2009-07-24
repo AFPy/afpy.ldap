@@ -1,0 +1,9 @@
+:mod:`afpy.ldap.connection` -- LDAP Connection
+=================================================
+
+.. automodule:: afpy.ldap.connection
+
+.. autoclass:: Connection
+   :members:
+
+

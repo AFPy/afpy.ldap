@@ -4,6 +4,7 @@ bin
 dist
 eggs
 parts
+docs/_build
 develop-eggs
 .installed.cfg
 *.egg-info

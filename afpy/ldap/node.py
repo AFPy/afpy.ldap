@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+#Copyright (C) 2009 Gael Pasgrimaud
+__doc__ = """This module provide a Node class that you can extend
+"""
 import datetime
 import utils
 
@@ -19,18 +22,25 @@ class Node(object):
         if '=' not in self._dn:
             raise ValueError('Invalid dn %s' % self._dn)
         if attrs and 'dn' in attrs:
-            self._data = attrs
+            self._data = {}
+            for k, v in attrs.items():
+                if len(v) == 1:
+                    v = v[0]
+                self._data[k] = v
         else:
             self._data = None
         self._new_data = {}
 
     def bind(self, conn):
+        """rebind node to conn"""
         self._conn = conn
 
     def check(self, password):
+        """check credential by binding a new connection"""
         return self._conn.check(self._dn, password)
 
     def normalized_data(self):
+        """return ldap datas as dict"""
         if self._data:
             return self._data
         self._data = {}
@@ -44,43 +54,44 @@ class Node(object):
 
         return self._data
 
-    def save(self):
-        if self._data and 'dn' in self._data:
-            data = self._new_data.copy()
-            try:
-                self._conn._conn.modify(self._dn, attrs=data)
-            except Exception, e:
-                return e
-            else:
-                self._data = None
-                self._new_data = {}
-                return True
-
     @property
     def groups(self):
+        """return groups as string"""
         groups = self._conn.get_groups(self._dn)
         return [str(g) for g in groups]
 
     @property
     def groups_nodes(self):
+        """return  groups as nodes"""
         return self._conn.get_groups(self._dn)
 
     @property
     def member_nodes(self):
+        """return group members as nodes"""
         members = [self._conn.node_class(dn=m) for m in self.member]
 
+    def get(self, attr, default=None):
+        """get a node attribute"""
+        value = self.normalized_data().get(attr, default)
+        type = self._field_types.get(attr, None)
+        if type:
+            return utils.to_python(value, type)
+        return value
+
     def __getattr__(self, attr):
+        """get a node attribute"""
         try:
             value = self.normalized_data()[attr]
         except KeyError:
             raise AttributeError('%r as no attribute %s' % (self, attr))
         type = self._field_types.get(attr, None)
         if type:
-            return utils.to_python(value)
+            return utils.to_python(value, type)
         return value
 
 
     def __setattr__(self, attr, value):
+        """set a node attribute"""
         if attr.startswith('_'):
             object.__setattr__(self, attr, value)
         else:

@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+#Copyright (C) 2009 Gael Pasgrimaud
+__doc__ = """This module provide a ldap connection and a way to configure it via a .ini file
+"""
 from dataflake.ldapconnection.connection import LDAPConnection
 from dataflake.ldapconnection.utils import to_utf8
 from ConfigObject import ConfigObject
@@ -7,7 +10,7 @@ from node import Node
 import ldap
 import os
 
-class LDAP(object):
+class Connection(object):
     node_class = Node
     def __init__(self, section='ldap', prefix='ldap.', filename=os.path.expanduser('~/.ldap.cfg')):
         self.config = ConfigObject()
@@ -102,6 +105,18 @@ class LDAP(object):
                                  bind_dn=self.bind_dn,
                                  bind_pwd=self.bind_pw)
 
+
+    def save(self, node):
+        if node._data and 'dn' in node._data:
+            data = node._new_data.copy()
+            try:
+                self._conn.modify(node._dn, attrs=data)
+            except Exception, e:
+                raise e.__class__('Error while saving %r' % node)
+            else:
+                node._data = None
+                node._new_data = {}
+                return True
 
 
 def ldapconnection_from_config(config, prefix='ldap.', **kwargs):

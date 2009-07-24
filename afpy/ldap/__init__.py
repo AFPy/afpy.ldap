@@ -1,19 +1,6 @@
 # -*- coding: utf-8 -*-
-#Copyright (C) 2007 Gael Pasgrimaud
-#This program is free software: you can redistribute it and/or modify
-#it under the terms of the GNU General Public License as published by
-#the Free Software Foundation, either version 3 of the License, or
-#(at your option) any later version.
-#
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-from connection import LDAP
+#Copyright (C) 2009 Gael Pasgrimaud
+from connection import Connection
 import os
 
 IGNORE_KEYS=['uid', 'cn', 'sn', 'givenName',
@@ -21,7 +8,7 @@ IGNORE_KEYS=['uid', 'cn', 'sn', 'givenName',
              'jpegPhoto']
 
 def get_conn(section='ldap', prefix='ldap.', filename=os.path.expanduser('~/.ldap.cfg')):
-    return LDAP(section=section, prefix=prefix, filename=filename)
+    return Connection(section=section, prefix=prefix, filename=filename)
 
 def pprint(datas):
     def format(x,y):
