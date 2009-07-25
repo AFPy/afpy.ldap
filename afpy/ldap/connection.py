@@ -123,14 +123,16 @@ class Connection(object):
 
     def save(self, node):
         if node._data and 'dn' in node._data:
-            data = node._new_data.copy()
+            data = node._data.copy()
+            if 'dn' in data:
+                del data['dn']
+            self._conn.modify(node._dn, attrs=data)
             try:
                 self._conn.modify(node._dn, attrs=data)
             except Exception, e:
-                raise e.__class__('Error while saving %r' % node)
+                raise e.__class__('Error while saving %r: %s' % (node, e))
             else:
                 node._data = None
-                node._new_data = {}
                 return True
 
     def add(self, node):

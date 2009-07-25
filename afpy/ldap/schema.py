@@ -43,7 +43,7 @@ class Property(property):
         return utils.to_python(value, self.klass)
 
     def __set__(self, instance, value):
-        value = utils.to_string(value, instance.klass)
+        value = utils.to_string(value)
         data = instance.normalized_data()
         data[self.name] = value
 
@@ -57,5 +57,5 @@ class DateTimeProperty(Property):
     klass = datetime.datetime
 
 class IntegerProperty(Property):
-    klass = datetime.date
+    klass = int
 

@@ -20,6 +20,20 @@ from node import User as BaseUser
 from utils import to_string, to_python
 import schema
 
+DONATION = 'donation'
+PERSONNAL_MEMBERSHIP = 'personnal membership'
+STUDENT_MEMBERSHIP = 'student membership'
+CORPORATE_MEMBERSHIP = 'corporate membership'
+
+PAYMENTS_LABELS = (DONATION, PERSONNAL_MEMBERSHIP, STUDENT_MEMBERSHIP, CORPORATE_MEMBERSHIP)
+
+PAYMENTS_OPTIONS = {
+        DONATION:'Donation',
+        PERSONNAL_MEMBERSHIP:'Cotisation',
+        STUDENT_MEMBERSHIP:'Cotisation etudiante',
+#        CORPORATE_MEMBERSHIP:'Cotisation entreprise'
+}
+
 SUBSCRIBER_FILTER = '(&(objectClass=payment)(!(paymentObject=donation)))'
 
 class Payment(Node):
@@ -41,7 +55,7 @@ class Payment(Node):
     We can add some::
 
         >>> date = datetime.date(2002, 1, 1)
-        >>> payment = user.new_payment(paymentDate=date)
+        >>> payment = user.new_payment(paymentDate=date, paymentAmount=20)
         >>> conn.add(payment)
 
     It works::
@@ -49,6 +63,8 @@ class Payment(Node):
         >>> payment = user.payments[0]
         >>> payment.paymentDate
         datetime.date(2002, 1, 1)
+        >>> payment.paymentAmount
+        20
 
     Delete it. I was not a member in 2002::
 
@@ -62,6 +78,7 @@ class Payment(Node):
         datetime.date(2005, 1, 1)
 
     """
+    _rdn = 'paymentDate'
     _defaults = dict(objectClass=['top', 'payment'])
 
     paymentDate = schema.DateProperty('paymentDate')
@@ -105,10 +122,18 @@ class AfpyUser(BaseUser):
         st='FR',
        )
 
-    uid=schema.StringProperty('uid', required=True)
+    uid=schema.StringProperty('uid', title='Login', required=True)
+    title=schema.StringProperty('title', title='Role', required=True)
+    sn=schema.StringProperty('sn', title='Nom', required=True)
     mail=schema.StringProperty('mail', title='E-mail', required=True)
+    emailAlias=schema.StringProperty('emailAlias', title='Alias E-mail')
+    labeledURI=schema.StringProperty('labeledURI', title='Open Id')
     birthDate=schema.DateProperty('birthDate', title="Date de naissance", required=True)
+    telephoneNumber=schema.StringProperty('telephoneNumber', title='Tel.', required=True)
+    l=schema.StringProperty('l', title='Ville', required=True)
+    street=schema.StringProperty('street', title='Adresse', required=True)
     st=schema.StringProperty('st', title='Pays', required=True)
+    postalCode=schema.StringProperty('postalCode', title='Code Postal', required=True)
     membershipExpirationDate=schema.DateProperty('membershipExpirationDate', title="Expiration de cotisation")
 
     @property
@@ -131,6 +156,26 @@ class AfpyUser(BaseUser):
                      paymentAmount=paymentAmount, invoiceReference=invoiceReference)
         payment = Payment(dn=dn, attrs=attrs)
         return payment
+
+    @property
+    def email(self):
+        """return emailAlias if any or mail"""
+        alias = self.emailAlias
+        if alias and '@afpy.org' in alias:
+            return alias
+        return user.mail
+
+    @property
+    def expired(self):
+        """return True if membership is expired
+        """
+        date = self.membershipExpirationDate
+        if isinstance(date, datetime.date):
+            date = to_python(to_string(date), datetime.datetime)
+            if date > datetime.datetime.now():
+                return False
+        return True
+
 
 class Connection(BaseConnection):
     """Specific connection"""
@@ -183,4 +228,18 @@ def getExpiredUsers():
     members = getAllTimeAdherents() - getAdherents()
     return members
 
+def getMembersOf(uid):
+    """return user uids of group"""
+    conn = get_conn()
+    group = conn.get_group(uid)
+    return [p.split(',', 1)[0].split('=')[1] for p in group.member]
+
+def updateExpirationDate(user):
+    payments = [p for p in user.payments if p.paymentAmount]
+    if payments:
+        last = payments[-1]
+        expire = user.paymentDate+datetime.timedelta(400)
+        user.membershipExpirationDate = expire
+        user.save()
+    return last
 

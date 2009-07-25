@@ -57,7 +57,7 @@ class IntSerializer(BaseSerializer):
 
     @classmethod
     def to_python(cls, value):
-        if value:
+        if isinstance(value, basestring) and value.isdigit():
             try:
                 return int(value)
             except Exception, e:

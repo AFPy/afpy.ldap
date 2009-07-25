@@ -9,6 +9,7 @@ import schema
 
 class Node(object):
     _sa_instance_state = True
+    _rdn = None
     _defaults = {}
     _field_types = {}
 
@@ -22,7 +23,7 @@ class Node(object):
         elif uid and conn:
             self._dn = self._conn.uid2dn(uid)
 
-        self._pk = self._dn and self._dn.split(',', 1)[0].split('=')[1] or 'dn'
+        self._pk = self._dn and self._dn.split(',', 1)[0].split('=')[1] or None
 
         if attrs:
             self._data = self._defaults.copy()
@@ -32,13 +33,29 @@ class Node(object):
                 self._data[k] = utils.to_string(v)
         else:
             self._data = None
-        self._new_data = {}
 
     dn = schema.StringProperty('dn')
 
     def bind(self, conn):
         """rebind node to conn"""
         self._conn = conn
+
+    def save(self):
+        if self._conn and self._dn:
+            self._conn.save(self)
+        else:
+            raise RuntimeError('%r is not bind to a connection' % self)
+
+    def append(self, node):
+        if self._dn:
+            if node._rdn:
+                value = getattr(node, node._rdn)
+                node._dn = '%s=%s,%s' (node._rdn, value, self._dn)
+                node.bind(self._conn)
+            else:
+                raise ValueError('%r need a _rdn attr' % node)
+        else:
+            raise AttributeError('%r is not bound to a connection' % self)
 
     def normalized_data(self):
         """return ldap datas as dict"""
@@ -83,7 +100,6 @@ class Node(object):
         else:
             data = self.normalized_data()
             data[attr] = utils.to_string(value)
-            self._new_data[attr] = value
 
     def __eq__(self, node):
         return node._dn == self._dn

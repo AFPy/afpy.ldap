@@ -36,6 +36,7 @@ setup(name='afpy.ldap',
           'ConfigObject',
           'Formalchemy',
           'dataflake.ldapconnection',
+          'repoze.what',
       ],
       entry_points="""
       # -*- Entry points: -*-
