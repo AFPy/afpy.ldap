@@ -10,15 +10,16 @@ Get myself::
 
     >>> user = conn.get_user('gawel')
     >>> user
-    <Node at uid=gawel,ou=members,dc=afpy,dc=org>
+    <AfpyUser at uid=gawel,ou=members,dc=afpy,dc=org>
 
 """
 import datetime
 from connection import Connection as BaseConnection
-from node import Node as BaseNode
+from node import Node
+from node import User as BaseUser
 from utils import to_string, to_python
 
-class Payment(BaseNode):
+class Payment(Node):
     """
     Initialize connection and user::
 
@@ -64,10 +65,7 @@ class Payment(BaseNode):
         paymentAmount=int,
         )
 
-    def __repr__(self):
-        return BaseNode.__repr__(self).replace('<Node ', '<Payment ')
-
-class User(BaseNode):
+class AfpyUser(BaseUser):
     """
     Specific node for afpy member
 
@@ -81,14 +79,18 @@ class User(BaseNode):
 
     Try to add one. We need the conn to retrieve the correct dn from uid:
 
-        >>> user = ldap.User('afpy_test_user', attrs=dict(cn='Test User', sn='Test'), conn=conn)
+        >>> user = ldap.AfpyUser('afpy_test_user', attrs=dict(cn='Test AfpyUser', sn='Test'), conn=conn)
         >>> user
-        <Node at uid=afpy_test_user,ou=members,dc=afpy,dc=org>
+        <AfpyUser at uid=afpy_test_user,ou=members,dc=afpy,dc=org>
         >>> conn.add(user)
+
+        >>> user.change_password('toto')
+        >>> user.check('toto')
+        True
 
         >>> user = conn.get_user('afpy_test_user')
         >>> user
-        <Node at uid=afpy_test_user,ou=members,dc=afpy,dc=org>
+        <AfpyUser at uid=afpy_test_user,ou=members,dc=afpy,dc=org>
         >>> conn.delete(user)
 
     """
@@ -126,9 +128,24 @@ class User(BaseNode):
 
 class Connection(BaseConnection):
     """Specific connection"""
-    node_class = User
+    user_class = AfpyUser
 
 def get_conn():
     """return a ldap connection"""
     return Connection(section='afpy')
+
+def getUser(uid):
+    """
+    >>> getUser('gawel')
+    <AfpyUser at uid=gawel,ou=members,dc=afpy,dc=org>
+    >>> getUser('lskdslmdgkmdglsldjggsdgjsk')
+    """
+    user = get_conn().get_user(uid)
+    try:
+        user.dn
+    except:
+        return None
+    else:
+        return user
+    return get_conn().get_user(uid)
 

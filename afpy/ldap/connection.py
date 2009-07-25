@@ -12,12 +12,14 @@ from dataflake.ldapconnection.connection import LDAPConnection
 from dataflake.ldapconnection.utils import to_utf8
 from ConfigObject import ConfigObject
 from ConfigParser import NoOptionError
-from node import Node
+from node import Node, User, GroupOfNames
 import ldap
 import os
 
 class Connection(object):
     node_class = Node
+    user_class = User
+    group_class = GroupOfNames
     def __init__(self, section='ldap', prefix='ldap.', filename=os.path.expanduser('~/.ldap.cfg')):
         self.config = ConfigObject()
         self.config.read([filename])
@@ -90,13 +92,13 @@ class Connection(object):
     def get_user(self, uid, node_class=None):
         """return user as node object"""
         dn = self.uid2dn(uid)
-        node_class = node_class or self.node_class
+        node_class = node_class or self.user_class
         return node_class(dn=dn, conn=self)
 
     def get_group(self, uid, node_class=None):
         """return group as node object"""
         dn = self.group2dn(uid)
-        node_class = node_class or self.node_class
+        node_class = node_class or self.group_class
         return node_class(dn=dn, conn=self)
 
     def get_node(self, dn, node_class=None):
@@ -104,12 +106,14 @@ class Connection(object):
         node_class = node_class or self.node_class
         return node_class(dn=dn, conn=self)
 
-    def get_groups(self, dn, base_dn=None):
+    def get_groups(self, dn, base_dn=None, node_class=None):
         """return groups for dn"""
+        node_class = node_class or self.group_class
         if base_dn is None:
             base_dn = self.section[self.prefix+'group_dn']
         filter = '(&(objectClass=groupOfNames)(member=%s))' % dn
-        return self.search_nodes(base_dn=base_dn,
+        return self.search_nodes(node_class=node_class,
+                                 base_dn=base_dn,
                                  scope=ldap.SCOPE_SUBTREE,
                                  filter=filter,
                                  bind_dn=self.bind_dn,

@@ -2,7 +2,7 @@
 #Copyright (C) 2009 Gael Pasgrimaud
 __doc__ = """This module provide a Node class that you can extend
 """
-from ldaputil import passwd
+from ldaputil.passwd import UserPassword
 import datetime
 import utils
 
@@ -37,15 +37,6 @@ class Node(object):
         """rebind node to conn"""
         self._conn = conn
 
-    def check(self, password):
-        """check credential by binding a new connection"""
-        return self._conn.check(self._dn, password)
-
-    def change_password(self, old, new, scheme, charset='utf-8', multiple=0):
-        password = UserPassword(self._conn._conn, self._dn, charset=charset, multiple=multiple)
-        """
-        """
-
     def normalized_data(self):
         """return ldap datas as dict"""
         if self._data:
@@ -60,22 +51,6 @@ class Node(object):
                 self._data[k] = v
 
         return self._data
-
-    @property
-    def groups(self):
-        """return groups as string"""
-        groups = self._conn.get_groups(self._dn)
-        return [str(g) for g in groups]
-
-    @property
-    def groups_nodes(self):
-        """return  groups as nodes"""
-        return self._conn.get_groups(self._dn)
-
-    @property
-    def member_nodes(self):
-        """return group members as nodes"""
-        members = [self._conn.node_class(dn=m) for m in self.member]
 
     def get(self, attr, default=None):
         """get a node attribute"""
@@ -96,7 +71,6 @@ class Node(object):
             return utils.to_python(value, type)
         return value
 
-
     def __setattr__(self, attr, value):
         """set a node attribute"""
         if attr.startswith('_'):
@@ -106,9 +80,43 @@ class Node(object):
             data[attr] = utils.to_string(value)
             self._new_data[attr] = value
 
+    def __eq__(self, node):
+        return node._dn == self._dn
+
+    def __ne__(self, node):
+        return node._dn != self._dn
+
     def __str__(self):
         return self._dn.split(',', 1)[0].split('=')[1]
 
     def __repr__(self):
-        return '<Node at %s>' % self._dn
+        return '<%s at %s>' % (self.__class__.__name__, self._dn)
+
+class GroupOfNames(Node):
+    @property
+    def member_nodes(self):
+        """return group members as nodes"""
+        members = [self._conn.node_class(dn=m) for m in self.member]
+
+class User(Node):
+
+    def check(self, password):
+        """check credential by binding a new connection"""
+        return self._conn.check(self._dn, password)
+
+    def change_password(self, passwd, scheme='ssha', charset='utf-8', multiple=0):
+        """allow to change password"""
+        password = UserPassword(self._conn._conn.connect(), self._dn, charset=charset, multiple=multiple)
+        password.changePassword(None, passwd, scheme)
+
+    @property
+    def groups(self):
+        """return groups as string"""
+        groups = self._conn.get_groups(self._dn)
+        return [str(g) for g in groups]
+
+    @property
+    def groups_nodes(self):
+        """return  groups as nodes"""
+        return self._conn.get_groups(self._dn)
 
