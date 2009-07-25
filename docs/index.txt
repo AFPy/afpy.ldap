@@ -6,8 +6,9 @@
 Welcome to afpy.ldap's documentation!
 =====================================
 
+This module provide an easy way to deal with ldap stuff in python.
+
 This module is actively used on http://www.afpy.org to manage the french python comunity.
-It provide an easy way to manage ldap nodes via python.
 
 Contents:
 
@@ -16,8 +17,10 @@ Contents:
 
    connection
    node
-   utils
+   schema
    custom
+   forms
+   utils
 
 Indices and tables
 ==================

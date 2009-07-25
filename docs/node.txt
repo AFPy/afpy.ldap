@@ -6,4 +6,10 @@
 .. autoclass:: Node
    :members:
 
+.. autoclass:: User
+   :members:
+
+
+.. autoclass:: GroupOfNames
+   :members:
 

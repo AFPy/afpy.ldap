@@ -18,6 +18,9 @@ from connection import Connection as BaseConnection
 from node import Node
 from node import User as BaseUser
 from utils import to_string, to_python
+import schema
+
+SUBSCRIBER_FILTER = '(&(objectClass=payment)(!(paymentObject=donation)))'
 
 class Payment(Node):
     """
@@ -60,10 +63,11 @@ class Payment(Node):
 
     """
     _defaults = dict(objectClass=['top', 'payment'])
-    _field_types = dict(
-        paymentDate=datetime.date,
-        paymentAmount=int,
-        )
+
+    paymentDate = schema.DateAttribute('paymentDate')
+    paymentObject = schema.StringAttribute('paymentObject')
+    paymentAmount = schema.IntegerAttribute('paymentAmount')
+    invoiceReference = schema.StringAttribute('invoiceReference')
 
 class AfpyUser(BaseUser):
     """
@@ -95,15 +99,17 @@ class AfpyUser(BaseUser):
 
     """
 
-    _field_types = dict(
-        birthDate=datetime.date,
-        membershipExpirationDate=datetime.date,
-        )
     _defaults = dict(
         objectClass = ['top', 'person','associationMember',
                        'organizationalPerson', 'inetOrgPerson'],
         st='FR',
        )
+
+    uid=schema.StringAttribute('uid', required=True)
+    mail=schema.StringAttribute('mail', title='E-mail', required=True)
+    birthDate=schema.DateAttribute('birthDate', title="Date de naissance", required=True)
+    st=schema.StringAttribute('st', title='Pays', required=True)
+    membershipExpirationDate=schema.DateAttribute('membershipExpirationDate', title="Expiration de cotisation")
 
     @property
     def payments(self):
@@ -148,4 +154,33 @@ def getUser(uid):
     else:
         return user
     return get_conn().get_user(uid)
+
+def getAdherents(min=365, max=None):
+    """ return users with a payment > now - min and < now - max
+    """
+    min = to_string(datetime.datetime.now()-datetime.timedelta(min))
+    f = '(&%s(paymentAmount=*))' % SUBSCRIBER_FILTER
+    if max:
+        max = to_string(datetime.datetime.now()-datetime.timedelta(max))
+        f = '(&%s(&(paymentDate>=%s)(paymentDate<=%s)))' % (f, min,max)
+    else:
+        f = '(&%s(paymentDate>=%s))' % (f, min)
+    conn = get_conn()
+    members = conn.search(filter=f, attrs=['dn'])
+    members = [m['dn'].split(',')[1].split('=')[1] for m in members]
+    return set(members)
+
+def getAllTimeAdherents():
+    """return users with at least one payment
+    """
+    conn = get_conn()
+    return set([p['dn'].split(',')[1].split('=')[1] for p in conn.search(
+                        filter='objectClass=payment')])
+
+def getExpiredUsers():
+    """return unregulirised users
+    """
+    members = getAllTimeAdherents() - getAdherents()
+    return members
+
 

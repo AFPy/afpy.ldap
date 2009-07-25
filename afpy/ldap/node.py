@@ -5,24 +5,25 @@ __doc__ = """This module provide a Node class that you can extend
 from ldaputil.passwd import UserPassword
 import datetime
 import utils
+import schema
 
 class Node(object):
-
+    _sa_instance_state = True
     _defaults = {}
     _field_types = {}
 
     def __init__(self, uid=None, dn=None, conn=None, attrs={}):
         self._conn = conn
+        self._dn = None
         if dn:
             self._dn = dn
         elif uid and '=' in uid:
             self._dn = uid
         elif uid and conn:
             self._dn = self._conn.uid2dn(uid)
-        else:
-            raise ValueError('You must provide an uid or dn')
-        if '=' not in self._dn:
-            raise ValueError('Invalid dn %s' % self._dn)
+
+        self._pk = self._dn and self._dn.split(',', 1)[0].split('=')[1] or 'dn'
+
         if attrs:
             self._data = self._defaults.copy()
             for k, v in attrs.items():
@@ -33,6 +34,8 @@ class Node(object):
             self._data = None
         self._new_data = {}
 
+    dn = schema.StringAttribute('dn')
+
     def bind(self, conn):
         """rebind node to conn"""
         self._conn = conn
@@ -41,6 +44,8 @@ class Node(object):
         """return ldap datas as dict"""
         if self._data:
             return self._data
+        if not self._conn:
+            return {}
         self._data = {}
         data = self._conn.get_dn(self._dn)
         results = data.get('results', {})

@@ -66,6 +66,7 @@ class Connection(object):
         return self._conn.search(options.pop('base_dn'), options.pop('scope'), **options)['results']
 
     def search_nodes(self, node_class=None, **kwargs):
+        """like search nut return :class:`~afpy.ldap.node.Node` objects"""
         node_class = node_class or self.node_class
         return [node_class(r['dn'], attrs=r, conn=self) for r in self.search(**kwargs)]
 
@@ -90,24 +91,24 @@ class Connection(object):
         return '=' in uid and uid or group_mask.replace('{uid}', uid)
 
     def get_user(self, uid, node_class=None):
-        """return user as node object"""
+        """return user as :class:`~afpy.ldap.node.User` object"""
         dn = self.uid2dn(uid)
         node_class = node_class or self.user_class
         return node_class(dn=dn, conn=self)
 
     def get_group(self, uid, node_class=None):
-        """return group as node object"""
+        """return group as :class:`~afpy.ldap.node.GroupOfNames` object"""
         dn = self.group2dn(uid)
         node_class = node_class or self.group_class
         return node_class(dn=dn, conn=self)
 
     def get_node(self, dn, node_class=None):
-        """return node for dn"""
+        """return :class:`~afpy.ldap.node.Node` for dn"""
         node_class = node_class or self.node_class
         return node_class(dn=dn, conn=self)
 
     def get_groups(self, dn, base_dn=None, node_class=None):
-        """return groups for dn"""
+        """return groups for dn as :class:`~afpy.ldap.node.GroupOfNames`"""
         node_class = node_class or self.group_class
         if base_dn is None:
             base_dn = self.section[self.prefix+'group_dn']
