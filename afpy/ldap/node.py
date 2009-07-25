@@ -34,7 +34,7 @@ class Node(object):
             self._data = None
         self._new_data = {}
 
-    dn = schema.StringAttribute('dn')
+    dn = schema.StringProperty('dn')
 
     def bind(self, conn):
         """rebind node to conn"""

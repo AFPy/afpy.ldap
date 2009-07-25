@@ -1,0 +1,11 @@
+:mod:`afpy.ldap.forms` -- HTML Forms generation
+=================================================================
+
+.. automodule:: afpy.ldap.forms
+
+.. autoclass:: FieldSet
+
+.. autoclass:: Grid
+
+.. autoclass:: Field
+

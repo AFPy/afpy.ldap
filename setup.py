@@ -34,6 +34,7 @@ setup(name='afpy.ldap',
           'WebOb',
           'WebTest',
           'ConfigObject',
+          'Formalchemy',
           'dataflake.ldapconnection',
       ],
       entry_points="""

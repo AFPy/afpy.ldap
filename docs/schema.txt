@@ -1,0 +1,12 @@
+:mod:`afpy.ldap.schema` -- Mapping your ldap attributes to schema
+=================================================================
+
+.. automodule:: afpy.ldap.schema
+
+.. autoclass:: StringProperty
+
+.. autoclass:: IntegerProperty
+
+.. autoclass:: DateTimeProperty
+
+.. autoclass:: DateProperty

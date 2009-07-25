@@ -64,10 +64,10 @@ class Payment(Node):
     """
     _defaults = dict(objectClass=['top', 'payment'])
 
-    paymentDate = schema.DateAttribute('paymentDate')
-    paymentObject = schema.StringAttribute('paymentObject')
-    paymentAmount = schema.IntegerAttribute('paymentAmount')
-    invoiceReference = schema.StringAttribute('invoiceReference')
+    paymentDate = schema.DateProperty('paymentDate')
+    paymentObject = schema.StringProperty('paymentObject')
+    paymentAmount = schema.IntegerProperty('paymentAmount')
+    invoiceReference = schema.StringProperty('invoiceReference')
 
 class AfpyUser(BaseUser):
     """
@@ -105,11 +105,11 @@ class AfpyUser(BaseUser):
         st='FR',
        )
 
-    uid=schema.StringAttribute('uid', required=True)
-    mail=schema.StringAttribute('mail', title='E-mail', required=True)
-    birthDate=schema.DateAttribute('birthDate', title="Date de naissance", required=True)
-    st=schema.StringAttribute('st', title='Pays', required=True)
-    membershipExpirationDate=schema.DateAttribute('membershipExpirationDate', title="Expiration de cotisation")
+    uid=schema.StringProperty('uid', required=True)
+    mail=schema.StringProperty('mail', title='E-mail', required=True)
+    birthDate=schema.DateProperty('birthDate', title="Date de naissance", required=True)
+    st=schema.StringProperty('st', title='Pays', required=True)
+    membershipExpirationDate=schema.DateProperty('membershipExpirationDate', title="Expiration de cotisation")
 
     @property
     def payments(self):
