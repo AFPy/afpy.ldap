@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
 #Copyright (C) 2009 Gael Pasgrimaud
-__doc__ = """This module provide a ldap connection and a way to configure it via a .ini file
+__doc__ = """This module provide a ldap connection configurable via a .ini file
+
+    >>> import afpy.ldap
+    >>> conn = afpy.ldap.Connection(section='afpy')
+    >>> conn.search_nodes(filter='(uid=gawel)')
+    [<Node at uid=gawel,ou=members,dc=afpy,dc=org>]
+
 """
 from dataflake.ldapconnection.connection import LDAPConnection
 from dataflake.ldapconnection.utils import to_utf8
@@ -57,8 +63,9 @@ class Connection(object):
         options.update(kwargs)
         return self._conn.search(options.pop('base_dn'), options.pop('scope'), **options)['results']
 
-    def search_nodes(self, **kwargs):
-        return [self.node_class(r['dn'], attrs=r, conn=self) for r in self.search(**kwargs)]
+    def search_nodes(self, node_class=None, **kwargs):
+        node_class = node_class or self.node_class
+        return [node_class(r['dn'], attrs=r, conn=self) for r in self.search(**kwargs)]
 
     def get_dn(self, dn):
         """return search result for dn"""
@@ -80,19 +87,22 @@ class Connection(object):
         group_mask = self.get('group_mask', 'cn={uid},%s' % self.section[self.prefix+'group_dn'])
         return '=' in uid and uid or group_mask.replace('{uid}', uid)
 
-    def get_user(self, uid):
+    def get_user(self, uid, node_class=None):
         """return user as node object"""
         dn = self.uid2dn(uid)
-        return self.node_class(dn=dn, conn=self)
+        node_class = node_class or self.node_class
+        return node_class(dn=dn, conn=self)
 
-    def get_group(self, uid):
+    def get_group(self, uid, node_class=None):
         """return group as node object"""
         dn = self.group2dn(uid)
-        return self.node_class(dn=dn, conn=self)
+        node_class = node_class or self.node_class
+        return node_class(dn=dn, conn=self)
 
-    def get_node(self, dn=None):
+    def get_node(self, dn, node_class=None):
         """return node for dn"""
-        return self.node_class(dn=dn, conn=self)
+        node_class = node_class or self.node_class
+        return node_class(dn=dn, conn=self)
 
     def get_groups(self, dn, base_dn=None):
         """return groups for dn"""
@@ -118,6 +128,18 @@ class Connection(object):
                 node._new_data = {}
                 return True
 
+    def add(self, node):
+        attrs = node._defaults.copy()
+        attrs.update(node._data)
+        rdn, base = node._dn.split(',', 1)
+        try:
+            self._conn.insert(base, rdn, attrs=attrs)
+        except Exception, e:
+            raise e.__class__('%s %s %s' % (e, node._dn, attrs))
+
+    def delete(self, node):
+        node._data = None
+        self._conn.delete(node._dn)
 
 def ldapconnection_from_config(config, prefix='ldap.', **kwargs):
     """This is useful to get an LDAPConnection from a ConfigParser section

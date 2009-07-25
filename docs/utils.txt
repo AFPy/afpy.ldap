@@ -1,0 +1,23 @@
+:mod:`afpy.ldap.utils` -- Utilities
+=================================================
+
+.. automodule:: afpy.ldap.utils
+
+.. autofunction:: register_serializer
+
+.. autoclass:: BaseSerializer
+   :members:
+
+.. autoclass:: DateSerializer
+   :members:
+
+.. autoclass:: DateTimeSerializer
+   :members:
+
+.. autoclass:: IntSerializer
+   :members:
+
+.. autofunction:: to_python
+
+.. autofunction:: to_string
+

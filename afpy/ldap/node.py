@@ -2,31 +2,33 @@
 #Copyright (C) 2009 Gael Pasgrimaud
 __doc__ = """This module provide a Node class that you can extend
 """
+from ldaputil import passwd
 import datetime
 import utils
 
 class Node(object):
 
+    _defaults = {}
     _field_types = {}
 
     def __init__(self, uid=None, dn=None, conn=None, attrs={}):
-        self._conn = conn or get_conn()
+        self._conn = conn
         if dn:
             self._dn = dn
         elif uid and '=' in uid:
             self._dn = uid
-        elif uid:
+        elif uid and conn:
             self._dn = self._conn.uid2dn(uid)
         else:
             raise ValueError('You must provide an uid or dn')
         if '=' not in self._dn:
             raise ValueError('Invalid dn %s' % self._dn)
-        if attrs and 'dn' in attrs:
-            self._data = {}
+        if attrs:
+            self._data = self._defaults.copy()
             for k, v in attrs.items():
-                if len(v) == 1:
+                if isinstance(v, (list, tuple)) and len(v) == 1:
                     v = v[0]
-                self._data[k] = v
+                self._data[k] = utils.to_string(v)
         else:
             self._data = None
         self._new_data = {}
@@ -38,6 +40,11 @@ class Node(object):
     def check(self, password):
         """check credential by binding a new connection"""
         return self._conn.check(self._dn, password)
+
+    def change_password(self, old, new, scheme, charset='utf-8', multiple=0):
+        password = UserPassword(self._conn._conn, self._dn, charset=charset, multiple=multiple)
+        """
+        """
 
     def normalized_data(self):
         """return ldap datas as dict"""

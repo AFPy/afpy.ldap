@@ -1,0 +1,19 @@
+:mod:`afpy.ldap.custom` -- AFPy specific classes
+=================================================
+
+.. automodule:: afpy.ldap.custom
+
+.. autoclass:: Node
+   :members:
+
+   .. attribute:: _field_types
+
+      This attribute map specific fields to a class so the fields are serialized/deserialized:
+
+        dict(birthDate=datetime.date, membershipExpirationDate=datetime.date,
+        paymentDate=datetime.date, paymentAmount=int)
+
+.. autoclass:: Connection
+   :members:
+
+.. autofunction:: get_conn

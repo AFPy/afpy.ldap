@@ -3,6 +3,11 @@
 
 .. automodule:: afpy.ldap.connection
 
+Here is the .ini file:
+
+.. literalinclude:: ldap.cfg
+   :language: ini
+
 .. autoclass:: Connection
    :members:
 

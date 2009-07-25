@@ -1,7 +1,30 @@
 # -*- coding: utf-8 -*-
 import datetime
 
-class DateSerializer(object):
+_serializers = []
+
+def register_serializer(klass):
+    """add a new serializer to the list
+    """
+    for attr in ('to_python', 'to_string', 'klass'):
+        if not hasattr(klass, attr):
+            raise AttributeError('%s as not attribute %s' % (klass, attr))
+    _serializers.insert(0, klass)
+
+class BaseSerializer(object):
+    klass = basestring
+    @classmethod
+    def to_python(cls, value):
+        """convert string to python object"""
+        return value
+
+    @classmethod
+    def to_string(cls, value):
+        """convert string to python object"""
+        return value
+register_serializer(BaseSerializer)
+
+class DateSerializer(BaseSerializer):
     klass = datetime.date
     _range_index = 7
 
@@ -22,12 +45,14 @@ class DateSerializer(object):
     def to_string(cls, value):
         if isinstance(value, cls.klass):
             return value.strftime('%Y%m%d%H%M00Z')
+register_serializer(DateSerializer)
 
 class DateTimeSerializer(DateSerializer):
     klass = datetime.datetime
     _range_index = 11
+register_serializer(DateTimeSerializer)
 
-class IntSerializer(object):
+class IntSerializer(BaseSerializer):
     klass = int
 
     @classmethod
@@ -41,11 +66,23 @@ class IntSerializer(object):
     @classmethod
     def to_string(cls, value):
         return str(value)
+register_serializer(IntSerializer)
 
-_serializers = (DateTimeSerializer, DateSerializer, IntSerializer)
+class ListSerializer(BaseSerializer):
+    klass=list
+    @classmethod
+    def to_python(cls, value):
+        return value
+    @classmethod
+    def to_string(cls, value):
+        return [to_string(v) for v in value]
+register_serializer(ListSerializer)
 
 def to_string(value):
-    if value:
+    """serialize a python object to string"""
+    if value is None:
+        return None
+    if not isinstance(value, basestring):
         for serializer in _serializers:
             if isinstance(value, serializer.klass):
                 return serializer.to_string(value)
@@ -54,6 +91,7 @@ def to_string(value):
     return value
 
 def to_python(value, klass):
+    """convert a string to python"""
     if value:
         for serializer in _serializers:
             if klass is serializer.klass:

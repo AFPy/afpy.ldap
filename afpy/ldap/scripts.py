@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from optparse import OptionParser
-import gp.ldap
+import afpy.ldap
 import string
 import base64
 import sys
