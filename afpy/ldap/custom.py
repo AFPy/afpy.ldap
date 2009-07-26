@@ -81,10 +81,10 @@ class Payment(Node):
     _rdn = 'paymentDate'
     _defaults = dict(objectClass=['top', 'payment'])
 
-    paymentDate = schema.DateProperty('paymentDate')
-    paymentObject = schema.StringProperty('paymentObject')
-    paymentAmount = schema.IntegerProperty('paymentAmount')
-    invoiceReference = schema.StringProperty('invoiceReference')
+    paymentDate = schema.DateProperty('paymentDate', title='Date', required=True)
+    paymentObject = schema.StringProperty('paymentObject', title='Type', required=True)
+    paymentAmount = schema.IntegerProperty('paymentAmount', title='Montant', required=True)
+    invoiceReference = schema.StringProperty('invoiceReference', title='Reference')
 
 class AfpyUser(BaseUser):
     """
@@ -142,10 +142,6 @@ class AfpyUser(BaseUser):
         payments = self._conn.search_nodes(node_class=Payment, base_dn=self._dn, filter='(objectClass=payment)')
         return sorted(payments, key=lambda i: i.paymentDate)
 
-    def last_payments(self):
-        """
-        """
-
     def new_payment(self, paymentDate, paymentObject='personnal membership', paymentAmount=0, invoiceReference=''):
         """add a payment"""
         if not isinstance(paymentDate, datetime.date):
@@ -163,7 +159,7 @@ class AfpyUser(BaseUser):
         alias = self.emailAlias
         if alias and '@afpy.org' in alias:
             return alias
-        return user.mail
+        return self.mail
 
     @property
     def expired(self):
@@ -175,6 +171,10 @@ class AfpyUser(BaseUser):
             if date > datetime.datetime.now():
                 return False
         return True
+
+    def append(node, save=True):
+        super(AfpyUser, self).append(node, save=save)
+        updateExpirationDate(self)
 
 
 class Connection(BaseConnection):
@@ -238,8 +238,21 @@ def updateExpirationDate(user):
     payments = [p for p in user.payments if p.paymentAmount]
     if payments:
         last = payments[-1]
-        expire = user.paymentDate+datetime.timedelta(400)
+        expire = to_python(to_string(last.paymentDate), datetime.datetime)+datetime.timedelta(400)
         user.membershipExpirationDate = expire
         user.save()
     return last
+
+def applyToMembers(callback, filter=None):
+    import string
+    conn = get_conn()
+    if filter:
+        filter='&((uid=%%s*)%s)' % filter
+    else:
+        filter='(uid=%s*)' % filter
+    for l in string.lowercase:
+        users = conn.search_nodes(node_class=AfpyUser, filter = filter % l)
+        for u in users:
+            callback(u)
+
 

@@ -13,7 +13,7 @@ class Node(object):
     _defaults = {}
     _field_types = {}
 
-    def __init__(self, uid=None, dn=None, conn=None, attrs={}):
+    def __init__(self, uid=None, dn=None, conn=None, attrs=None):
         self._conn = conn
         self._dn = None
         if dn:
@@ -31,6 +31,8 @@ class Node(object):
                 if isinstance(v, (list, tuple)) and len(v) == 1:
                     v = v[0]
                 self._data[k] = utils.to_string(v)
+        elif attrs is not None:
+            self._data = attrs
         else:
             self._data = None
 
@@ -46,12 +48,19 @@ class Node(object):
         else:
             raise RuntimeError('%r is not bind to a connection' % self)
 
-    def append(self, node):
+    def append(self, node, save=True):
         if self._dn:
             if node._rdn:
-                value = getattr(node, node._rdn)
-                node._dn = '%s=%s,%s' (node._rdn, value, self._dn)
+                value = utils.to_string(getattr(node, node._rdn))
+                node._dn = '%s=%s,%s' % (node._rdn, value, self._dn)
                 node.bind(self._conn)
+                if save:
+                    try:
+                        self._conn.get_dn(node._dn)
+                    except ValueError:
+                        self._conn.add(node)
+                    else:
+                        self._conn.save(node)
             else:
                 raise ValueError('%r need a _rdn attr' % node)
         else:
@@ -62,7 +71,9 @@ class Node(object):
         if self._data:
             return self._data
         if not self._conn:
-            return {}
+            # new instance. node to store data tought
+            self._data = {}
+            return self._data
         self._data = {}
         data = self._conn.get_dn(self._dn)
         results = data.get('results', {})

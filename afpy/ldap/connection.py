@@ -122,13 +122,15 @@ class Connection(object):
 
 
     def save(self, node):
-        if node._data and 'dn' in node._data:
-            data = node._data.copy()
-            if 'dn' in data:
-                del data['dn']
-            self._conn.modify(node._dn, attrs=data)
+        if node._data and node._dn:
+            node._conn = self
+            attrs = node._data.copy()
+            if 'dn' in attrs:
+                dn = attrs.pop('dn')
+                if dn != node._dn:
+                    raise ValueError('Inconsistent dn for %r: %s %s' % (self, node._dn, dn))
             try:
-                self._conn.modify(node._dn, attrs=data)
+                self._conn.modify(node._dn, attrs=attrs)
             except Exception, e:
                 raise e.__class__('Error while saving %r: %s' % (node, e))
             else:
@@ -136,13 +138,20 @@ class Connection(object):
                 return True
 
     def add(self, node):
+        node._conn = self
         attrs = node._defaults.copy()
         attrs.update(node._data)
+        if 'dn' in attrs:
+            dn = attrs.pop('dn')
+            if dn != node._dn:
+                raise ValueError('Inconsistent dn for %r: %s %s' % (self, node._dn, dn))
         rdn, base = node._dn.split(',', 1)
         try:
             self._conn.insert(base, rdn, attrs=attrs)
         except Exception, e:
             raise e.__class__('%s %s %s' % (e, node._dn, attrs))
+        else:
+            node._data = None
 
     def delete(self, node):
         node._data = None
