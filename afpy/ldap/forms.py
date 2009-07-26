@@ -11,7 +11,6 @@ __doc__ = """This module allow to generate forms from :class:`~afpy.ldap.node.No
       <label class="field_req" for="AfpyUser-gawel-uid">Login</label>
       <input id="AfpyUser-gawel-uid" name="AfpyUser-gawel-uid" type="text" value="gawel" />
     </div>
-    <BLANKLINE>
     <script type="text/javascript">
     //<![CDATA[
     document.getElementById("AfpyUser-gawel-uid").focus();
