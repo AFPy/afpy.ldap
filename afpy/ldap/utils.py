@@ -3,6 +3,7 @@ import datetime
 
 _serializers = []
 
+
 def register_serializer(klass):
     """add a new serializer to the list
     """

@@ -1,0 +1,10 @@
+About tests
+==============
+
+Test are run with the real afpy's ldap server since it's hard to mock a ldap server.
+
+To run tests create a tunnel::
+
+  $ ssh -L 1389:localhost:389 py.afpy.org
+  $ ./bin/nosetest
+

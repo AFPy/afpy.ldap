@@ -29,6 +29,28 @@ used for :mod:`afpy.ldap.forms` generation.
 
 import utils, datetime
 
+class Attribute(property):
+
+    def __init__(self, name):
+        self.name = name
+
+    def __get__(self, instance, klass):
+        return getattr(instance, '_%s' % self.name)
+
+    def __set__(self, instance, value):
+        setattr(instance, '_%s' % self.name, value)
+
+class Dn(Attribute):
+
+    def __set__(self, instance, value):
+        if value and '=' in value:
+            self._dn = value
+        elif value and instance._conn:
+            self._dn = self._conn.uid2dn(uid)
+        else:
+            self._dn = None
+        instance._pk = value and self._dn.split(',', 1)[0].split('=')[1] or None
+
 class Property(property):
     klass = str
 

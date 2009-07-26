@@ -6,19 +6,17 @@ __doc__ = """This module allow to generate forms from :class:`~afpy.ldap.node.No
     >>> fs = FieldSet(ldap.AfpyUser)
     >>> fs.configure(include=[fs.uid])
     >>> fs = fs.bind(user)
-    >>> print fs.render()
-    <BLANKLINE>
-    <BLANKLINE>
+    >>> print fs.render().strip()
     <div>
-      <label class="field_req" for="AfpyUser-gawel-uid">Uid</label>
+      <label class="field_req" for="AfpyUser-gawel-uid">Login</label>
       <input id="AfpyUser-gawel-uid" name="AfpyUser-gawel-uid" type="text" value="gawel" />
     </div>
+    <BLANKLINE>
     <script type="text/javascript">
     //<![CDATA[
     document.getElementById("AfpyUser-gawel-uid").focus();
     //]]>
     </script>
-    <BLANKLINE>
 
 For more informations on how this works look the FormAlchemy_'s documentation.
 

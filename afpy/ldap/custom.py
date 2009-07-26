@@ -116,6 +116,8 @@ class AfpyUser(BaseUser):
 
     """
 
+    _rdn = 'uid'
+    _base_dn = 'ou=members,dc=afpy,dc=org'
     _defaults = dict(
         objectClass = ['top', 'person','associationMember',
                        'organizationalPerson', 'inetOrgPerson'],
@@ -177,12 +179,11 @@ class AfpyUser(BaseUser):
         updateExpirationDate(self)
 
 
-class Connection(BaseConnection):
-    """Specific connection"""
-    user_class = AfpyUser
-
 def get_conn():
     """return a ldap connection"""
+    class Connection(BaseConnection):
+        """Specific connection"""
+        user_class = AfpyUser
     return Connection(section='afpy')
 
 def getUser(uid):
@@ -193,7 +194,7 @@ def getUser(uid):
     """
     user = get_conn().get_user(uid)
     try:
-        user.dn
+        user.normalized_data()
     except:
         return None
     else:
