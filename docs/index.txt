@@ -55,7 +55,6 @@ Generate forms::
     ...
 
 
-
 The source code can be find on the `AFPy repository`_
 
 .. _AFPy repository: https://hg.afpy.org/afpy.ldap/summary
