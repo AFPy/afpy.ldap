@@ -199,7 +199,11 @@ def getUser(uid):
         return None
     else:
         return user
-    return get_conn().get_user(uid)
+
+def getUserByTitle(title):
+    conn = get_conn()
+    res = conn.search_nodes(filter='(title=%s)' % title, node_class=AfpyUser)
+    return res[0]
 
 def getAdherents(min=365, max=None):
     """ return users with a payment > now - min and < now - max

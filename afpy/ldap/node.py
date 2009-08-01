@@ -199,6 +199,15 @@ class Node(object):
             data = self.normalized_data()
             data[attr] = utils.to_string(value)
 
+    def __delattr__(self, attr):
+        """del a node attribute"""
+        if attr.startswith('_'):
+            object.__delattr__(self, attr)
+        else:
+            data = self.normalized_data()
+            if attr in data:
+                del data[attr]
+
     def __eq__(self, node):
         return node._dn == self._dn
 
