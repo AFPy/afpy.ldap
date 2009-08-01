@@ -13,7 +13,7 @@ def register_serializer(klass):
     _serializers.insert(0, klass)
 
 class BaseSerializer(object):
-    klass = basestring
+    klass = str
     @classmethod
     def to_python(cls, value):
         """convert string to python object"""
@@ -24,6 +24,30 @@ class BaseSerializer(object):
         """convert string to python object"""
         return value
 register_serializer(BaseSerializer)
+
+class UnicodeSerializer(object):
+    klass = unicode
+    encodings = ['utf-8', 'iso-8859-1']
+    @classmethod
+    def to_python(cls, value):
+        """convert string to python object"""
+        for encoding in cls.encodings:
+            try:
+                return value.decode(encoding)
+            except Exception, e:
+                pass
+        raise
+
+    @classmethod
+    def to_string(cls, value):
+        """convert string to python object"""
+        for encoding in cls.encodings:
+            try:
+                return value.encode(encoding)
+            except Exception, e:
+                pass
+        raise
+register_serializer(UnicodeSerializer)
 
 class DateSerializer(BaseSerializer):
     klass = datetime.date

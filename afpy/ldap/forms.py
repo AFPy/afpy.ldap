@@ -45,7 +45,7 @@ class Field(BaseField):
             v = self._deserialize()
             if v is not None:
                 return v
-        return getattr(self.model, self.name)
+        return getattr(self.model, self.name, None)
     value = property(value)
 
     def sync(self):
@@ -67,8 +67,11 @@ class FieldSet(BaseFieldSet):
         focus = True
         for k, v in model.__dict__.iteritems():
             if isinstance(v, schema.Property):
+                type =  v.__class__.__name__.replace('Property','')
+                if type == 'Unicode':
+                    type = 'String'
                 try:
-                    t = getattr(fatypes, v.__class__.__name__.replace('Property',''))
+                    t = getattr(fatypes, type)
                 except AttributeError:
                     raise NotImplementedError('%s is not mapped to a type' % v.__class__)
                 else:

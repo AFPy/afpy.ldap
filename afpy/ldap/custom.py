@@ -126,14 +126,14 @@ class AfpyUser(BaseUser):
 
     uid=schema.StringProperty('uid', title='Login', required=True)
     title=schema.StringProperty('title', title='Role', required=True)
-    sn=schema.StringProperty('sn', title='Nom', required=True)
+    sn=schema.UnicodeProperty('sn', title='Nom', required=True)
     mail=schema.StringProperty('mail', title='E-mail', required=True)
     emailAlias=schema.StringProperty('emailAlias', title='Alias E-mail')
     labeledURI=schema.StringProperty('labeledURI', title='Open Id')
     birthDate=schema.DateProperty('birthDate', title="Date de naissance", required=True)
     telephoneNumber=schema.StringProperty('telephoneNumber', title='Tel.', required=True)
-    l=schema.StringProperty('l', title='Ville', required=True)
-    street=schema.StringProperty('street', title='Adresse', required=True)
+    l=schema.UnicodeProperty('l', title='Ville', required=True)
+    street=schema.UnicodeProperty('street', title='Adresse', required=True)
     st=schema.StringProperty('st', title='Pays', required=True)
     postalCode=schema.StringProperty('postalCode', title='Code Postal', required=True)
     membershipExpirationDate=schema.DateProperty('membershipExpirationDate', title="Expiration de cotisation")
@@ -174,7 +174,7 @@ class AfpyUser(BaseUser):
                 return False
         return True
 
-    def append(node, save=True):
+    def append(self, node, save=True):
         super(AfpyUser, self).append(node, save=save)
         updateExpirationDate(self)
 

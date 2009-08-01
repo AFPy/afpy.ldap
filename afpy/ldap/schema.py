@@ -69,6 +69,9 @@ class Property(property):
         data = instance.normalized_data()
         data[self.name] = value
 
+class UnicodeProperty(Property):
+    klass = unicode
+
 class StringProperty(Property):
     klass = str
 
