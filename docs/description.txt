@@ -1,0 +1,50 @@
+This module provide an easy way to deal with ldap stuff in python.
+
+This module is actively used on http://www.afpy.org to manage the french python comunity members.
+
+Get a connection::
+
+    >>> from afpy.ldap import custom as ldap
+    >>> conn = ldap.get_conn()
+    >>> dn = 'uid=gawel,ou=members,dc=afpy,dc=org'
+    >>> node = conn.get_node(dn)
+    >>> node
+    <Node at uid=gawel,ou=members,dc=afpy,dc=org>
+
+    >>> print node.birthDate
+    19750410000000Z
+
+
+    >>> from afpy.ldap.node import Node
+    >>> from afpy.ldap import schema
+    >>> class User(Node):
+    ...     uid=schema.StringProperty('uid')
+    ...     birthDate = schema.DateProperty('birthDate', title='Date de naissance')
+    >>> node = conn.get_node(dn, node_class=User)
+    >>> node
+    <User at uid=gawel,ou=members,dc=afpy,dc=org>
+    >>> node.birthDate
+    datetime.date(1975, 4, 10)
+
+Generate forms with FormAlchemy_::
+
+    >>> from afpy.ldap import forms
+    >>> fs = forms.FieldSet(User)
+    >>> user = User()
+    >>> fs.rebind(user)
+    >>> print fs.render().strip() # doctest: +ELLIPSIS
+    <div>
+      <label class="field_opt" for="User--uid">uid</label>
+      <input id="User--uid" name="User--uid" type="text" />
+    </div>
+    ...
+    <div>
+      <label class="field_opt" for="User--birthDate">Date de naissance</label>
+    ...
+
+.. _FormAlchemy: http://docs.formalchemy.org
+
+The source code can be find on the `AFPy repository`_
+
+.. _AFPy repository: https://hg.afpy.org/afpy.ldap/summary
+

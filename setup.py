@@ -8,12 +8,17 @@ from setuptools import setup, find_packages
 
 version = '0.1'
 
-long_description = ''
+long_description = open(os.path.join('docs', 'description.txt')).read()
 
 setup(name='afpy.ldap',
       version=version,
-      description="The afpy.ldap package",
-      long_description=long_description,
+      description="This module provide an easy way to deal with ldap stuff in python.",
+      long_description='''
+afpy.ldap
+=========
+
+%s
+''' % long_description,
       # Get more strings from http://www.python.org/pypi?%3Aaction=list_classifiers
       classifiers=[
         "Programming Language :: Python",
@@ -22,7 +27,7 @@ setup(name='afpy.ldap',
       keywords='ldap',
       author='Gael Pasgrimaud',
       author_email='gael@gawel.org',
-      url='',
+      url='http://www.gawel.org/docs/afpy.ldap/',
       license='MIT',
       packages=find_packages(exclude=['ez_setup']),
       namespace_packages=['afpy'],
