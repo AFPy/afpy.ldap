@@ -9,8 +9,7 @@
 .. autoclass:: Payment
    :members:
 
-.. autoclass:: Connection
-   :members:
+.. autofunction:: get_conn
 
 .. autofunction:: getUser
 
