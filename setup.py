@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2009 Gael Pasgrimaud
 """
-This module contains the tool of gp.ldap
+afpy.ldap
 """
 import os
 from setuptools import setup, find_packages
 
-version = '0.1'
+version = '0.2'
 
 long_description = open(os.path.join('docs', 'description.txt')).read()
 

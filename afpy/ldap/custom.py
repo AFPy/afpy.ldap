@@ -55,8 +55,11 @@ class Payment(Node):
     We can add some::
 
         >>> date = datetime.date(2002, 1, 1)
-        >>> payment = user.new_payment(paymentDate=date, paymentAmount=20)
-        >>> conn.add(payment)
+        >>> payment = ldap.Payment()
+        >>> payment.paymentDate=date
+        >>> payment.paymentAmount=20
+        >>> payment.paymentObject = ldap.PERSONNAL_MEMBERSHIP
+        >>> user.append(payment)
 
     It works::
 
@@ -144,17 +147,6 @@ class AfpyUser(BaseUser):
         payments = self._conn.search_nodes(node_class=Payment, base_dn=self._dn, filter='(objectClass=payment)')
         return sorted(payments, key=lambda i: i.paymentDate)
 
-    def new_payment(self, paymentDate, paymentObject='personnal membership', paymentAmount=0, invoiceReference=''):
-        """add a payment"""
-        if not isinstance(paymentDate, datetime.date):
-            paymentDate = to_python(to_string(paymentDate), datetime.date)
-        dn = 'paymentDate=%s,%s' % (to_string(paymentDate), self._dn)
-        attrs = Payment._defaults.copy()
-        attrs.update(paymentDate=paymentDate, paymentObject=paymentObject,
-                     paymentAmount=paymentAmount, invoiceReference=invoiceReference)
-        payment = Payment(dn=dn, attrs=attrs)
-        return payment
-
     @property
     def email(self):
         """return emailAlias if any or mail"""
@@ -225,11 +217,20 @@ def getAllTimeAdherents():
     """
     conn = get_conn()
     return set([p['dn'].split(',')[1].split('=')[1] for p in conn.search(
-                        filter='objectClass=payment')])
+                        filter='(objectClass=payment)')])
+
+def getAwaitingPayments():
+    """return users with at least one payment
+    """
+    conn = get_conn()
+    members = set([p['dn'].split(',')[1].split('=')[1] for p in conn.search(
+                        filter='(&(objectClass=payment)(invoiceReference=awaiting*))')])
+    return members
 
 def getExpiredUsers():
     """return unregulirised users
     """
+    conn = get_conn()
     members = getAllTimeAdherents() - getAdherents()
     return members
 

@@ -1,11 +1,13 @@
-This module provide an easy way to deal with ldap stuff in python.
-
 This module is actively used on http://www.afpy.org to manage the french python comunity members.
 
-Get a connection::
+Get a connection (this custom afpy connection get is configuration from a
+`~/.ldap.ini` file)::
 
     >>> from afpy.ldap import custom as ldap
     >>> conn = ldap.get_conn()
+
+Get a node via is dn::
+
     >>> dn = 'uid=gawel,ou=members,dc=afpy,dc=org'
     >>> node = conn.get_node(dn)
     >>> node
@@ -14,6 +16,7 @@ Get a connection::
     >>> print node.birthDate
     19750410000000Z
 
+You can also define your own node class with a schema::
 
     >>> from afpy.ldap.node import Node
     >>> from afpy.ldap import schema
@@ -23,10 +26,13 @@ Get a connection::
     >>> node = conn.get_node(dn, node_class=User)
     >>> node
     <User at uid=gawel,ou=members,dc=afpy,dc=org>
+
+Then data is converted to a python object::
+
     >>> node.birthDate
     datetime.date(1975, 4, 10)
 
-Generate forms with FormAlchemy_::
+This also allow to generate forms with FormAlchemy_::
 
     >>> from afpy.ldap import forms
     >>> fs = forms.FieldSet(User)
@@ -47,4 +53,7 @@ Generate forms with FormAlchemy_::
 The source code can be find on the `AFPy repository`_
 
 .. _AFPy repository: https://hg.afpy.org/afpy.ldap/summary
+
+Got a bug, feature request ? Want to send beer because you love it ? Send an
+email at afpy-web@lists.afpy.org
 

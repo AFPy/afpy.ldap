@@ -30,6 +30,7 @@ used for :mod:`afpy.ldap.forms` generation.
 import utils, datetime
 
 class Attribute(property):
+    """An attribute not showed in forms"""
 
     def __init__(self, name):
         self.name = name
@@ -41,15 +42,28 @@ class Attribute(property):
         setattr(instance, '_%s' % self.name, value)
 
 class Dn(Attribute):
+    """Used to generate dn on new objects. The :class:`~afpy.ldap.node.Node` class already got one::
 
-    def __set__(self, instance, value):
-        if value and '=' in value:
-            self._dn = value
-        elif value and instance._conn:
-            self._dn = self._conn.uid2dn(uid)
-        else:
-            self._dn = None
-        instance._pk = value and self._dn.split(',', 1)[0].split('=')[1] or None
+    >>> from afpy.ldap import node
+    >>> class MyUser(node.Node):
+    ...     _rdn = 'uid'
+    ...     _base_dn = 'ou=members,dc=afpy,dc=org'
+    >>> user = MyUser()
+    >>> user.uid = 'gawel'
+    >>> user.dn
+    'uid=gawel,ou=members,dc=afpy,dc=org'
+
+    """
+
+    def __get__(self, instance, klass):
+        if not instance._dn:
+            if instance._rdn and instance._base_dn:
+                value = getattr(instance, instance._rdn, None)
+                if value:
+                    instance._dn = '%s=%s,%s' % (instance._rdn, value, instance._base_dn)
+        if instance._dn and not instance._pk:
+            instance._pk = instance._dn and instance._dn.split(',', 1)[0].split('=')[1] or None
+        return instance._dn
 
 class Property(property):
     klass = str

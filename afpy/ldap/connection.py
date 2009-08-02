@@ -122,15 +122,15 @@ class Connection(object):
 
 
     def save(self, node):
-        if node._data and node._dn:
+        if node._data and node.dn:
             node._conn = self
             attrs = node._data.copy()
             if 'dn' in attrs:
                 dn = attrs.pop('dn')
-                if dn != node._dn:
-                    raise ValueError('Inconsistent dn for %r: %s %s' % (self, node._dn, dn))
+                if dn != node.dn:
+                    raise ValueError('Inconsistent dn for %r: %s %s' % (self, node.dn, dn))
             try:
-                self._conn.modify(node._dn, attrs=attrs)
+                self._conn.modify(node.dn, attrs=attrs)
             except Exception, e:
                 raise e.__class__('Error while saving %r: %s' % (node, e))
             else:
@@ -143,19 +143,19 @@ class Connection(object):
         attrs.update(node._data)
         if 'dn' in attrs:
             dn = attrs.pop('dn')
-            if dn != node._dn:
-                raise ValueError('Inconsistent dn for %r: %s %s' % (self, node._dn, dn))
-        rdn, base = node._dn.split(',', 1)
+            if dn != node.dn:
+                raise ValueError('Inconsistent dn for %r: %s %s' % (self, node.dn, dn))
+        rdn, base = node.dn.split(',', 1)
         try:
             self._conn.insert(base, rdn, attrs=attrs)
         except Exception, e:
-            raise e.__class__('%s %s %s' % (e, node._dn, attrs))
+            raise e.__class__('%s %s %s' % (e, node.dn, attrs))
         else:
             node._data = None
 
     def delete(self, node):
         node._data = None
-        self._conn.delete(node._dn)
+        self._conn.delete(node.dn)
 
 def ldapconnection_from_config(config, prefix='ldap.', **kwargs):
     """This is useful to get an LDAPConnection from a ConfigParser section

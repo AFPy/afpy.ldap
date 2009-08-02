@@ -103,7 +103,7 @@ class FieldSet(BaseFieldSet):
                 except:
                     raise Exception('%s appears to be a class, not an instance, but FormAlchemy cannot instantiate it.  (Make sure all constructor parameters are optional!)' % model)
             self.model = model
-            self._bound_pk = model._pk
+            self._bound_pk = model.dn and model._pk or None
         if data is None:
             self.data = None
         elif hasattr(data, 'getall') and hasattr(data, 'getone'):

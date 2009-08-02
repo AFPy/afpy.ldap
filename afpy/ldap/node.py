@@ -136,14 +136,14 @@ class Node(object):
             raise RuntimeError('%r is not bind to a connection' % self)
 
     def append(self, node, save=True):
-        if self._dn:
+        if self.dn:
             if node._rdn:
                 value = utils.to_string(getattr(node, node._rdn))
-                node._dn = '%s=%s,%s' % (node._rdn, value, self._dn)
+                node._dn = '%s=%s,%s' % (node._rdn, value, self.dn)
                 node.bind(self._conn)
                 if save:
                     try:
-                        self._conn.get_dn(node._dn)
+                        self._conn.get_dn(node.dn)
                     except ValueError:
                         self._conn.add(node)
                     else:
