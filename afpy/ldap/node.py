@@ -8,6 +8,13 @@ import utils
 import schema
 
 class Node(object):
+    """A ldap node::
+
+        >>> node = Node('uid=gawel,dc=afpy,dc=org')
+        >>> print node._dn
+        uid=gawel,dc=afpy,dc=org
+
+    """
     _sa_instance_state = True
     _rdn = None
     _base_dn = None
@@ -22,7 +29,7 @@ class Node(object):
     def __init__(self, uid=None, dn=None, conn=None, attrs=None):
         self._conn = conn
         self._dn = None
-        self._update_dn(uid, dn=dn)
+        self._update_dn(uid=uid, dn=dn)
         if attrs:
             self._data = self._defaults.copy()
             for k, v in attrs.items():

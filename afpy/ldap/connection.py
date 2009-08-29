@@ -127,7 +127,7 @@ class Connection(object):
             attrs = node._data.copy()
             if 'dn' in attrs:
                 dn = attrs.pop('dn')
-                if dn != node.dn:
+                if dn.lower() != node.dn.lower():
                     raise ValueError('Inconsistent dn for %r: %s %s' % (self, node.dn, dn))
             try:
                 self._conn.modify(node.dn, attrs=attrs)
