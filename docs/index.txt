@@ -8,7 +8,7 @@ Welcome to afpy.ldap's documentation!
 
 This module provide an easy way to deal with ldap stuff in python.
 
-.. include:: description.txt
+.. include:: ../README.txt
 
 Contents:
 
