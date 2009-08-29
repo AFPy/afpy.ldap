@@ -27,7 +27,7 @@ afpy.ldap
       keywords='ldap',
       author='Gael Pasgrimaud',
       author_email='gael@gawel.org',
-      url='https://hg.afpy.org/afpy.ldap/',
+      url='https://hg.afpy.org/gawel/afpy.ldap/',
       license='MIT',
       packages=find_packages(exclude=['ez_setup']),
       namespace_packages=['afpy'],
