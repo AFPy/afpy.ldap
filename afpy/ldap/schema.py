@@ -68,9 +68,10 @@ class Dn(Attribute):
 class Property(property):
     klass = str
 
-    def __init__(self, name, title=None, required=False):
+    def __init__(self, name, title=None, description='', required=False):
         self.name = name
         self.title = title or name
+        self.description = description
         self.required = required
 
     def __get__(self, instance, klass):

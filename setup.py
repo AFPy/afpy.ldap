@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 
 version = '0.2'
 
-long_description = open(os.path.join('docs', 'description.txt')).read()
+long_description = open(os.path.join('README.txt')).read()
 
 setup(name='afpy.ldap',
       version=version,

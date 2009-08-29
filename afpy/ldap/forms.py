@@ -3,10 +3,12 @@ __doc__ = """This module allow to generate forms from :class:`~afpy.ldap.node.No
 
     >>> from afpy.ldap import custom as ldap
     >>> user = ldap.getUser('gawel')
+    >>> user.uid
+    'gawel'
     >>> fs = FieldSet(ldap.AfpyUser)
     >>> fs.configure(include=[fs.uid])
     >>> fs = fs.bind(user)
-    >>> print fs.render().strip() #doctest: +ELLIPSIS
+    >>> print fs.render().strip() #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     <div>
       <label class="field_req" for="AfpyUser-gawel-uid">Login</label>
       <input id="AfpyUser-gawel-uid" name="AfpyUser-gawel-uid" type="text" value="gawel" />
@@ -43,6 +45,7 @@ class Field(BaseField):
                 return v
         return getattr(self.model, self.name, None)
     value = property(value)
+    model_value = value
 
     def sync(self):
         """Set the attribute's value in `model` to the value given in `data`"""
@@ -71,8 +74,10 @@ class FieldSet(BaseFieldSet):
                 except AttributeError:
                     raise NotImplementedError('%s is not mapped to a type' % v.__class__)
                 else:
-                    self.add(Field(name=k, type=t))
-                    self._fields[k].label_text = v.title
+                    self.append(Field(name=k, type=t))
+                    self[k].set(label=v.title)
+                    if v.description:
+                        self[k].set(instruction=v.description)
                     if v.required:
                         self._fields[k].validators.append(validators.required)
 

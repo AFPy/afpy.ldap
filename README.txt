@@ -38,7 +38,7 @@ This also allow to generate forms with FormAlchemy_::
     >>> fs = forms.FieldSet(User)
     >>> user = User()
     >>> fs.rebind(user)
-    >>> print fs.render().strip() # doctest: +ELLIPSIS
+    >>> print fs.render().strip() # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     <div>
       <label class="field_opt" for="User--uid">uid</label>
       <input id="User--uid" name="User--uid" type="text" />
