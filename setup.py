@@ -6,7 +6,7 @@ afpy.ldap
 import os
 from setuptools import setup, find_packages
 
-version = '0.2'
+version = '0.3'
 
 long_description = open(os.path.join('README.txt')).read()
 
