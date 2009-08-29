@@ -45,7 +45,9 @@ class Field(BaseField):
                 return v
         return getattr(self.model, self.name, None)
     value = property(value)
-    model_value = value
+    def model_value(self):
+        return getattr(self.model, self.name, None)
+    model_value = raw_value = property(model_value)
 
     def sync(self):
         """Set the attribute's value in `model` to the value given in `data`"""
