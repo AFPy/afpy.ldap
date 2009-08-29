@@ -143,7 +143,7 @@ class Connection(object):
         attrs.update(node._data)
         if 'dn' in attrs:
             dn = attrs.pop('dn')
-            if dn != node.dn:
+            if dn.lower() != node.dn.lower():
                 raise ValueError('Inconsistent dn for %r: %s %s' % (self, node.dn, dn))
         rdn, base = node.dn.split(',', 1)
         try:
