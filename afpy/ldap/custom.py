@@ -242,6 +242,7 @@ def getMembersOf(uid):
 
 def updateExpirationDate(user):
     payments = [p for p in user.payments if p.paymentAmount]
+    last = None
     if payments:
         last = payments[-1]
         expire = to_python(to_string(last.paymentDate), datetime.datetime)+datetime.timedelta(400)
