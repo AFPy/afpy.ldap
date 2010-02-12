@@ -184,7 +184,7 @@ def getUser(uid):
     <AfpyUser at uid=gawel,ou=members,dc=afpy,dc=org>
     >>> getUser('lskdslmdgkmdglsldjggsdgjsk')
     """
-    user = get_conn().get_user(uid)
+    user = get_conn().get_user(str(uid))
     try:
         user.normalized_data()
     except:

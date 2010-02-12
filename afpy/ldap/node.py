@@ -48,7 +48,8 @@ class Node(object):
             self._dn = uid
         elif uid and self._base_dn and self._rdn:
             self._dn = '%s=%s,%s' % (self._rdn, uid, self._base_dn)
-        self._pk = self._dn and self._dn.split(',', 1)[0].split('=')[1] or None
+        pk = self._dn and self._dn.split(',', 1)[0].split('=')[1] or None
+        self._pk = pk and pk.lower() or None
 
     @classmethod
     def search(cls, conn, **kwargs):
