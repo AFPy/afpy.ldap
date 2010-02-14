@@ -52,7 +52,7 @@ This also allow to generate forms with FormAlchemy_::
 
 The source code can be find on the `AFPy repository`_
 
-.. _AFPy repository: https://hg.afpy.org/afpy.ldap/summary
+.. _AFPy repository: https://hg.afpy.org/gawel/afpy.ldap/summary
 
 Got a bug, feature request ? Want to send beer because you love it ? Send an
 email at afpy-web@lists.afpy.org
