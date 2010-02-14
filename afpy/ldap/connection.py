@@ -9,12 +9,95 @@ __doc__ = """This module provide a ldap connection configurable via a .ini file
 
 """
 from dataflake.ldapconnection.connection import LDAPConnection
-from dataflake.ldapconnection.utils import to_utf8
 from ConfigObject import ConfigObject
 from ConfigParser import NoOptionError
 from node import Node, User, GroupOfNames
+from ldap.ldapobject import ReconnectLDAPObject
 import ldap
+import _ldap
 import os
+
+class SmartLDAPObject(ReconnectLDAPObject):
+  """
+  Mainly the __init__() method does some smarter things
+  like negotiating the LDAP protocol version and calling
+  LDAPObject.start_tls_s().
+  """
+
+  def __init__(self,uri,
+    trace_level=0,trace_file=None,trace_stack_limit=5,
+    retry_max=1,retry_delay=60.0,
+    who='',cred='',
+    start_tls=1,
+    tls_cacertfile=None,tls_cacertdir=None,
+    tls_clcertfile=None,tls_clkeyfile=None,
+  ):
+    """
+    Return LDAPObject instance by opening LDAP connection to
+    LDAP host specified by LDAP URL.
+
+    Unlike ldap.initialize() this function also trys to bind
+    explicitly with the bind DN and credential given as parameter,
+    probe the supported LDAP version and trys to use
+    StartTLS extended operation if this was specified.
+
+    Parameters like ReconnectLDAPObject.__init__() with these
+    additional arguments:
+    who,cred
+        The Bind-DN and credential to use for simple bind
+        right after connecting.
+    start_tls
+        Determines if StartTLS extended operation is tried
+        on a LDAPv3 server and if the LDAP URL scheme is ldap:.
+        If LDAP URL scheme is not ldap: (e.g. ldaps: or ldapi:)
+        this parameter is ignored.
+        0       Don't use StartTLS ext op
+        1       Try StartTLS ext op but proceed when unavailable
+        2       Try StartTLS ext op and re-raise exception if it fails
+    tls_cacertfile
+
+    tls_clcertfile
+
+    tls_clkeyfile
+
+    """
+    # Initialize LDAP connection
+    ReconnectLDAPObject.__init__(
+      self,uri,
+      trace_level=trace_level,
+      trace_file=trace_file,
+      trace_stack_limit=trace_stack_limit,
+      retry_max=retry_max,
+      retry_delay=retry_delay
+    )
+    # Set protocol version to LDAPv3
+    self.protocol_version = ldap.VERSION3
+    self.started_tls = 0
+    try:
+        self.simple_bind_s(who,cred)
+    except ldap.PROTOCOL_ERROR:
+        # Drop connection completely
+        self.unbind_s() ; del self._l
+        self._l = ldap.functions._ldap_function_call(_ldap.initialize,self._uri)
+        self.protocol_version = ldap.VERSION2
+        self.simple_bind_s(who,cred)
+    # Try to start TLS if requested
+    if start_tls>0 and uri[:5]=='ldaps:':
+        if self.protocol_version>=ldap.VERSION3:
+            try:
+                self.start_tls_s()
+            except (ldap.PROTOCOL_ERROR,ldap.CONNECT_ERROR):
+                if start_tls>=2:
+                    # Application does not accept clear-text connection
+                    # => re-raise exception
+                    raise
+            else:
+                self.started_tls = 1
+        else:
+            if start_tls>=2:
+                raise ValueError,"StartTLS extended operation only possible on LDAPv3+ server!"
+    if self.protocol_version==ldap.VERSION2 or (who and cred):
+        self.simple_bind_s(who,cred)
 
 class Connection(object):
     node_class = Node
@@ -40,12 +123,13 @@ class Connection(object):
         except (NoOptionError, KeyError):
             return default
 
-    def connection_factory(self, user=None, passwd=None):
+    def connection_factory(self, *args, **kwargs):
         config = dict(self.section.items())
         conn = ldapconnection_from_config(config, prefix=self.prefix)
-        if conn.server.get('protocol') == 'ldaps':
-            ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
-            ldap.set_option(ldap.OPT_REFERRALS, 0)
+        for url in conn.servers.keys():
+            if 'ldaps://' in url:
+                ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
+                ldap.set_option(ldap.OPT_REFERRALS, 0)
         return conn
 
     def check(self, uid, password):
@@ -58,6 +142,9 @@ class Connection(object):
 
     def search(self, **kwargs):
         """search"""
+        if 'filter' in kwargs:
+            kwargs['fltr'] = kwargs['filter']
+            del kwargs['filter']
         options = dict(base_dn=self.base_dn,
                        scope=ldap.SCOPE_SUBTREE,
                        bind_dn=self.bind_dn,
@@ -165,8 +252,7 @@ def ldapconnection_from_config(config, prefix='ldap.', **kwargs):
             host='localhost',
             port = 389,
             protocol = 'ldap',
-            c_factory = ldap.initialize,
-            login_attr='',
+            c_factory=SmartLDAPObject,
             rdn_attr='',
             bind_dn='',
             bind_pwd='',

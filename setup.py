@@ -6,9 +6,18 @@ afpy.ldap
 import os
 from setuptools import setup, find_packages
 
-version = '0.3'
+version = '0.5'
 
-long_description = open(os.path.join('README.txt')).read()
+long_description = """%s
+
+News
+=====
+
+%s
+""" % (
+        open(os.path.join('README.txt')).read(),
+        open(os.path.join('CHANGES.txt')).read()
+      )
 
 setup(name='afpy.ldap',
       version=version,
@@ -40,7 +49,7 @@ afpy.ldap
           'WebTest',
           'ConfigObject',
           'Formalchemy',
-          'dataflake.ldapconnection',
+          'dataflake.ldapconnection>0.9',
           'repoze.what',
       ],
       entry_points="""
