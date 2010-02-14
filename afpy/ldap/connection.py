@@ -111,7 +111,7 @@ class Connection(object):
         self._conn = self.connection_factory()
         try:
             self.bind_dn = self.get('bind_dn')
-            self.bind_pw = self.get('bind_pw')
+            self.bind_pw = self.get('bind_pwd')
             self.base_dn = self.get('base_dn', self.bind_dn.split(',', 1)[1])
         except Exception, e:
             raise e.__class__('Invalid configuration %s - %s' % (section, self.section))

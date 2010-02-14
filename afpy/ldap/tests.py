@@ -6,8 +6,7 @@ import afpy.ldap.utils
 import afpy.ldap.wsgi
 from webtest import TestApp
 
-ldap = afpy.ldap.Connection()
-ldap = afpy.ldap.Connection(section=ldap.config.tests.section)
+ldap = afpy.ldap.Connection(section='afpy')
 
 def test_datetime_serializer():
     date = afpy.ldap.utils.to_python('20100504122300Z', klass=datetime.datetime)
