@@ -66,22 +66,21 @@ class FieldSet(BaseFieldSet):
         self.focus = True
         self._errors = []
         focus = True
-        for k, v in model.__dict__.iteritems():
-            if isinstance(v, schema.Property):
-                type =  v.__class__.__name__.replace('Property','')
-                if type == 'Unicode':
-                    type = 'String'
-                try:
-                    t = getattr(fatypes, type)
-                except AttributeError:
-                    raise NotImplementedError('%s is not mapped to a type' % v.__class__)
-                else:
-                    self.append(Field(name=k, type=t))
-                    self[k].set(label=v.title)
-                    if v.description:
-                        self[k].set(instruction=v.description)
-                    if v.required:
-                        self._fields[k].validators.append(validators.required)
+        for k, v in model.properties():
+            type =  v.__class__.__name__.replace('Property','')
+            if type == 'Unicode':
+                type = 'String'
+            try:
+                t = getattr(fatypes, type)
+            except AttributeError:
+                raise NotImplementedError('%s is not mapped to a type' % v.__class__)
+            else:
+                self.append(Field(name=k, type=t))
+                self[k].set(label=v.title)
+                if v.description:
+                    self[k].set(instruction=v.description)
+                if v.required:
+                    self._fields[k].validators.append(validators.required)
 
     def bind(self, model, session=None, data=None):
         """Bind to an instance"""

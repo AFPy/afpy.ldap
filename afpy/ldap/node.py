@@ -27,6 +27,7 @@ class Node(object):
     conn = schema.Attribute('conn')
 
     def __init__(self, uid=None, dn=None, conn=None, attrs=None):
+        object.__init__(self)
         self._conn = conn
         self._dn = None
         self._update_dn(uid=uid, dn=dn)
@@ -50,6 +51,17 @@ class Node(object):
             self._dn = '%s=%s,%s' % (self._rdn, uid, self._base_dn)
         pk = self._dn and self._dn.split(',', 1)[0].split('=')[1] or None
         self._pk = pk and pk.lower() or None
+
+    @classmethod
+    def properties(cls):
+        props = []
+        for k, v in cls.__dict__.items():
+            if isinstance(v, schema.Property):
+                props.append((k, v))
+        def cmp_prop(a, b):
+            return cmp(a[1].order, b[1].order)
+        props.sort(cmp=cmp_prop)
+        return props
 
     @classmethod
     def search(cls, conn, **kwargs):
@@ -201,11 +213,16 @@ class Node(object):
 
     def __setattr__(self, attr, value):
         """set a node attribute"""
-        if attr.startswith('_'):
+        if attr.startswith('_') or \
+           isinstance(getattr(self.__class__, attr, None), property):
             object.__setattr__(self, attr, value)
         else:
             data = self.normalized_data()
-            data[attr] = utils.to_string(value)
+            if value is None:
+                value = []
+            else:
+                value = utils.to_string(value)
+            data[attr] = value
 
     def __delattr__(self, attr):
         """del a node attribute"""
@@ -214,7 +231,7 @@ class Node(object):
         else:
             data = self.normalized_data()
             if attr in data:
-                del data[attr]
+                data[attr] = []
 
     def __eq__(self, node):
         return node._dn == self._dn
@@ -227,12 +244,6 @@ class Node(object):
 
     def __repr__(self):
         return '<%s at %s>' % (self.__class__.__name__, self._dn)
-
-class GroupOfNames(Node):
-    @property
-    def member_nodes(self):
-        """return group members as nodes"""
-        members = [self._conn.node_class(dn=m) for m in self.member]
 
 class User(Node):
 
@@ -256,3 +267,10 @@ class User(Node):
         """return  groups as nodes"""
         return self._conn.get_groups(self._dn)
 
+class GroupOfNames(Node):
+    member = schema.SetProperty('member', title='Members')
+    member_nodes = schema.SetOfNodesProperty('member', title='Members', node_class=User)
+
+    def __repr__(self):
+        return '<%s at %s (%s members)>' % (self.__class__.__name__,
+                                    self.dn, len(self._data.get('member', [])))

@@ -36,6 +36,8 @@ class Attribute(property):
         self.name = name
 
     def __get__(self, instance, klass):
+        if instance is None:
+            return self
         return getattr(instance, '_%s' % self.name)
 
     def __set__(self, instance, value):
@@ -56,6 +58,8 @@ class Dn(Attribute):
     """
 
     def __get__(self, instance, klass):
+        if instance is None:
+            return self
         if not instance._dn:
             if instance._rdn and instance._base_dn:
                 value = getattr(instance, instance._rdn, None)
@@ -67,22 +71,33 @@ class Dn(Attribute):
 
 class Property(property):
     klass = str
+    count = 0
 
     def __init__(self, name, title=None, description='', required=False):
         self.name = name
-        self.title = title or name
+        self.title = title or name.title()
         self.description = description
         self.required = required
+        Property.count += 1
+        self.order = Property.count
 
     def __get__(self, instance, klass):
+        if instance is None:
+            return self
         data = instance.normalized_data()
         value = data.get(self.name)
         return utils.to_python(value, self.klass)
 
     def __set__(self, instance, value):
-        value = utils.to_string(value)
         data = instance.normalized_data()
         data[self.name] = value
+
+    def __delete__(self, instance):
+        data = instance.normalized_data()
+        data[self.name] = []
+
+    def __repr__(self):
+        return '<%s %r>' % (self.__class__.__name__, self.name)
 
 class UnicodeProperty(Property):
     klass = unicode
@@ -98,4 +113,55 @@ class DateTimeProperty(Property):
 
 class IntegerProperty(Property):
     klass = int
+
+class ListProperty(Property):
+    klass = list
+    item_klass = basestring
+
+    def _to_python(self, value, instance=None):
+        return self.klass(value)
+
+    def _to_ldap(self, value, instance=None):
+        return list(value)
+
+    def __get__(self, instance, klass):
+        if instance is None:
+            return self
+        data = instance.normalized_data()
+        value = data.get(self.name)
+        if not value:
+            value = []
+        elif isinstance(value, basestring):
+            value = [value]
+        return self._to_python(value, instance)
+
+    def __set__(self, instance, value):
+        data = instance.normalized_data()
+        if value is None:
+            value = self.klass()
+        elif not isinstance(value, self.klass):
+            raise TypeError('Value for %s must by %s not %s' % (self.name, self.klass, type(value)))
+        for i in value:
+            if not isinstance(i, self.item_klass):
+                raise TypeError('All items of %s must by %s not %s' % (self.name, self.item_klass, type(i)))
+        data[self.name] = self._to_ldap(value, instance)
+
+class SetProperty(ListProperty):
+    klass = list
+
+class SetOfNodesProperty(SetProperty):
+    item_klass = None
+
+    def __init__(self, name, title, required=False, node_class=None):
+        SetProperty.__init__(self, name, title, required)
+        if node_class is None:
+            raise TypeError('node_class is required for %s property' % self.__class__.__name__)
+        self.item_klass = node_class
+
+    def _to_python(self, value, instance=None):
+        value = self.klass(value or [])
+        return self.klass([self.item_klass(dn=v, conn=instance.conn) for v in value])
+
+    def _to_ldap(self, value, instance=None):
+        return list([v.dn for v in value])
 
