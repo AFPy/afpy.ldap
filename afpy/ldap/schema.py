@@ -90,7 +90,10 @@ class Property(property):
 
     def __set__(self, instance, value):
         data = instance.normalized_data()
-        data[self.name] = value
+        if value is None:
+            data[self.name] = []
+        else:
+            data[self.name] = utils.to_string(value)
 
     def __delete__(self, instance):
         data = instance.normalized_data()

@@ -96,8 +96,8 @@ class Node(object):
 
         All is ok::
 
-            >>> klass.__dict__['birthDate'] #doctest: +ELLIPSIS
-            <afpy.ldap.schema.DateProperty object at ...>
+            >>> klass.birthDate
+            <DateProperty 'birthDate'>
 
         We can import and use it::
 
@@ -157,9 +157,9 @@ class Node(object):
 
     def append(self, node, save=True):
         if self.dn:
-            if node._rdn:
-                value = utils.to_string(getattr(node, node._rdn))
-                node._dn = '%s=%s,%s' % (node._rdn, value, self.dn)
+            if node.rdn:
+                value = utils.to_string(getattr(node, node.rdn))
+                node._dn = '%s=%s,%s' % (node.rdn, value, self.dn)
                 node.bind(self._conn)
                 if save:
                     try:

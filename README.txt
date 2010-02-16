@@ -40,7 +40,7 @@ This also allow to generate forms with FormAlchemy_::
     >>> fs.rebind(user)
     >>> print fs.render().strip() # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     <div>
-      <label class="field_opt" for="User--uid">uid</label>
+      <label class="field_opt" for="User--uid">Uid</label>
       <input id="User--uid" name="User--uid" type="text" />
     </div>
     ...
