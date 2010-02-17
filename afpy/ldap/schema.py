@@ -37,11 +37,12 @@ class Attribute(property):
 
     def __get__(self, instance, klass):
         if instance is None:
-            return self
-        return getattr(instance, '_%s' % self.name)
+            return getattr(klass, '_%s' % self.name, self)
+        else:
+            return getattr(instance, '_%s' % self.name, self)
 
     def __set__(self, instance, value):
-        setattr(instance, '_%s' % self.name, value)
+        setattr(instance.__class__, '_%s' % self.name, value)
 
 class Dn(Attribute):
     """Used to generate dn on new objects. The :class:`~afpy.ldap.node.Node` class already got one::
@@ -68,6 +69,9 @@ class Dn(Attribute):
         if instance._dn and not instance._pk:
             instance._pk = instance._dn and instance._dn.split(',', 1)[0].split('=')[1] or None
         return instance._dn
+
+    def __set__(self, instance, value):
+        setattr(instance, '_%s' % self.name, value)
 
 class Property(property):
     klass = str

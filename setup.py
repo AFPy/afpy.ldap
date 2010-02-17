@@ -55,7 +55,7 @@ afpy.ldap
       entry_points="""
       # -*- Entry points: -*-
       [console_scripts]
-      ldapgrep = gp.ldap.scripts:main
+      ldapsh = afpy.ldap.scripts:main
 
       [paste.app_factory]
       main = gp.ldap.wsgi:factory

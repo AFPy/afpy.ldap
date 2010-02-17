@@ -4,8 +4,11 @@ __doc__ = """This module provide a Node class that you can extend
 """
 from ldaputil.passwd import UserPassword
 import datetime
-import utils
 import schema
+import ldap
+import string
+import utils
+import sys
 
 class Node(object):
     """A ldap node::
@@ -16,6 +19,7 @@ class Node(object):
 
     """
     _sa_instance_state = True
+    _conn = None
     _rdn = None
     _base_dn = None
     _defaults = {}
@@ -28,7 +32,8 @@ class Node(object):
 
     def __init__(self, uid=None, dn=None, conn=None, attrs=None):
         object.__init__(self)
-        self._conn = conn
+        if conn and not self._conn:
+            self._conn = conn
         self._dn = None
         self._update_dn(uid=uid, dn=dn)
         if attrs:
@@ -47,30 +52,54 @@ class Node(object):
             self._dn = dn
         elif uid and '=' in uid:
             self._dn = uid
-        elif uid and self._base_dn and self._rdn:
-            self._dn = '%s=%s,%s' % (self._rdn, uid, self._base_dn)
+        elif uid and self.base_dn and self.rdn:
+            self._dn = '%s=%s,%s' % (self.rdn, uid, self.base_dn)
         pk = self._dn and self._dn.split(',', 1)[0].split('=')[1] or None
         self._pk = pk and pk.lower() or None
 
     @classmethod
-    def properties(cls):
+    def properties(cls_):
         props = []
-        for k, v in cls.__dict__.items():
-            if isinstance(v, schema.Property):
-                props.append((k, v))
+        props_names = []
+        for cls in cls_.mro():
+            for k, v in cls.__dict__.items():
+                if k not in props_names and isinstance(v, schema.Property):
+                    props.append((k, v))
+                    props_names.append(k)
         def cmp_prop(a, b):
             return cmp(a[1].order, b[1].order)
         props.sort(cmp=cmp_prop)
         return props
 
     @classmethod
-    def search(cls, conn, **kwargs):
+    def search(cls, conn=None, **kwargs):
         options = dict(
-            base_dn=cls._base_dn,
+            base_dn=cls.base_dn,
             filter='(objectClass=*)',
             )
         options.update(kwargs)
-        return conn.search_nodes(**kwargs)
+        conn = conn or cls.conn
+        return conn.search_nodes(node_class=cls, **options)
+
+    @classmethod
+    def unlimited_search(cls, filter='', f='', results=None):
+        if not filter.startswith('('):
+            filter = '(%s)' % filter
+        if results is None:
+            results = []
+        if not f:
+            try:
+                return cls.search(cls.conn, filter=filter)
+            except ldap.SIZELIMIT_EXCEEDED:
+                pass
+        for l in string.ascii_lowercase:
+            try:
+                results.extend(
+                   cls.search(cls.conn, filter='(&(%s=%s%s*)%s)' % (cls.rdn, f, l, filter))
+                   )
+            except ldap.SIZELIMIT_EXCEEDED:
+                pass
+        return results
 
     @classmethod
     def from_config(cls, config, section):
@@ -150,8 +179,12 @@ class Node(object):
         return conn.get_node(dn, node_class=cls)
 
     def save(self):
-        if self._conn and self._dn:
-            self._conn.save(self)
+        conn = self._conn or self.conn
+        if conn and self._dn:
+            try:
+                conn.save(self)
+            except ldap.NO_SUCH_OBJECT:
+                conn.add(self)
         else:
             raise RuntimeError('%r is not bind to a connection' % self)
 
@@ -240,10 +273,30 @@ class Node(object):
         return node._dn != self._dn
 
     def __str__(self):
-        return self._dn.split(',', 1)[0].split('=')[1]
+        return getattr(self, self.rdn)
+
+    def __unicode__(self):
+        return unicode(getattr(self, self.rdn))
 
     def __repr__(self):
-        return '<%s at %s>' % (self.__class__.__name__, self._dn)
+        return '<%s at %s>' % (self.__class__.__name__, self.dn)
+
+    def pprint(self, encoding=utils.DEFAULT_ENCODING, show_dn=True):
+        out = []
+        out.append(self.cn)
+        out.append('-'*len(self.cn))
+        if show_dn:
+            out.append('%-15.15s : %s' % ('dn', self.dn))
+        def enc(v):
+            if isinstance(v, unicode):
+                return v.encode(encoding, 'replace')
+            return v
+        for k, v in self.properties():
+            value = getattr(self, k, None)
+            if value:
+                title = v.title
+                out.append('%-15.15s : %s' % (enc(title), enc(value)))
+        return '\n'.join(out)
 
 class User(Node):
 
@@ -260,7 +313,7 @@ class User(Node):
     def groups(self):
         """return groups as string"""
         groups = self._conn.get_groups(self._dn)
-        return [str(g) for g in groups]
+        return [getattr(g, g.rdn) for g in groups]
 
     @property
     def groups_nodes(self):
@@ -268,9 +321,19 @@ class User(Node):
         return self._conn.get_groups(self._dn)
 
 class GroupOfNames(Node):
+    _rdn = 'cn'
+
     member = schema.SetProperty('member', title='Members')
     member_nodes = schema.SetOfNodesProperty('member', title='Members', node_class=User)
 
     def __repr__(self):
         return '<%s at %s (%s members)>' % (self.__class__.__name__,
                                     self.dn, len(self._data.get('member', [])))
+    def pprint(self):
+        out = []
+        out.append(self.cn)
+        out.append('-'*len(self.cn))
+        users = self.member_nodes
+        for u in users:
+            out.append(getattr(u, u.rdn))
+        return '\n'.join(out)

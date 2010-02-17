@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 import datetime
+import sys
+
+DEFAULT_ENCODING = getattr(sys.stdout, 'encoding', 'utf-8')
 
 _serializers = []
 

@@ -16,6 +16,7 @@ Get myself::
 import datetime
 from connection import Connection as BaseConnection
 from node import Node
+from node import GroupOfNames
 from node import User as BaseUser
 from utils import to_string, to_python
 import schema
@@ -171,6 +172,7 @@ class AfpyUser(BaseUser):
         updateExpirationDate(self)
 
 
+
 def get_conn():
     """return a ldap connection"""
     class Connection(BaseConnection):
@@ -262,4 +264,13 @@ def applyToMembers(callback, filter=None):
         for u in users:
             callback(u)
 
+class User(AfpyUser): pass
+
+class Group(GroupOfNames):
+    _rdn = 'cn'
+    _base_dn = 'ou=groups,dc=afpy,dc=org'
+
+def main():
+    from afpy.ldap.scripts import shell
+    shell(section='afpy', classes=(User, Group))
 
