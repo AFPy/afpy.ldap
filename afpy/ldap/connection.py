@@ -214,8 +214,8 @@ class Connection(object):
             attrs = node._data.copy()
             if 'dn' in attrs:
                 dn = attrs.pop('dn')
-                if dn.lower() != node.dn.lower():
-                    raise ValueError('Inconsistent dn for %r: %s %s' % (self, node.dn, dn))
+                if '=' not in dn or dn.lower() != node.dn.lower():
+                    raise ValueError('Inconsistent dn for %r: %s %s' % (node, node.dn, dn))
             try:
                 self._conn.modify(node.dn, attrs=attrs)
             except Exception, e:
@@ -232,8 +232,8 @@ class Connection(object):
                 attrs[k] = v
         if 'dn' in attrs:
             dn = attrs.pop('dn')
-            if dn.lower() != node.dn.lower():
-                raise ValueError('Inconsistent dn for %r: %s %s' % (self, node.dn, dn))
+            if '=' not in dn or dn.lower() != node.dn.lower():
+                raise ValueError('Inconsistent dn for %r: %s %s' % (node, node.dn, dn))
         rdn, base = node.dn.split(',', 1)
         try:
             self._conn.insert(base, rdn, attrs=attrs)
