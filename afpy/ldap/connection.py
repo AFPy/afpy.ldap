@@ -227,7 +227,9 @@ class Connection(object):
     def add(self, node):
         node._conn = self
         attrs = node._defaults.copy()
-        attrs.update(node._data)
+        for k, v in node._data.items():
+            if v not in ('', [], None):
+                attrs[k] = v
         if 'dn' in attrs:
             dn = attrs.pop('dn')
             if dn.lower() != node.dn.lower():
