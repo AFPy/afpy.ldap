@@ -132,8 +132,23 @@ class Connection(object):
                 ldap.set_option(ldap.OPT_REFERRALS, 0)
         return conn
 
-    def check(self, uid, password):
-        dn = self.uid2dn(uid)
+    def bind(self, *classes):
+        """bind classes to this connection"""
+        for klass in classes:
+            klass._conn = self
+            lname = klass.__name__.lower()
+            if lname == 'user':
+                self.user_class = klass
+            elif lname == 'group':
+                self.group_class = klass
+            if not klass.base_dn:
+                lname = klass.__name__.lower()
+                klass._base_dn = self.get('%s_dn' % lname, None)
+            if not klass.rdn:
+                klass._rdn = self.get('%s_rdn' % lname, None)
+
+    def check(self, dn, password):
+        """check a password for a dn"""
         try:
             self.connection_factory().connect(dn, password)
         except ldap.INVALID_CREDENTIALS, e:
@@ -167,26 +182,26 @@ class Connection(object):
         except:
             raise ValueError(dn)
 
-    def uid2dn(self, uid):
-        """apply `config:ldap.user_mask` to uid"""
-        user_mask = self.get('user_mask', 'uid={uid},%s' % self.base_dn)
-        return '=' in uid and uid or user_mask.replace('{uid}', uid)
-
-    def group2dn(self, uid):
-        """apply `config:ldap.group_mask` to uid"""
-        group_mask = self.get('group_mask', 'cn={uid},%s' % self.section[self.prefix+'group_dn'])
-        return '=' in uid and uid or group_mask.replace('{uid}', uid)
-
     def get_user(self, uid, node_class=None):
         """return user as :class:`~afpy.ldap.node.User` object"""
-        dn = self.uid2dn(uid)
         node_class = node_class or self.user_class
+        if '=' in uid:
+            dn = uid
+        elif node_class.rdn and node_class.base_dn:
+            dn = '%s=%s,%s' % (node_class.rdn, uid, node_class.base_dn)
+        else:
+            raise AttributeError("rdn or base_dn not set for %s" % node_class)
         return node_class(dn=dn, conn=self)
 
     def get_group(self, uid, node_class=None):
         """return group as :class:`~afpy.ldap.node.GroupOfNames` object"""
-        dn = self.group2dn(uid)
         node_class = node_class or self.group_class
+        if '=' in uid:
+            dn = uid
+        elif node_class.rdn and node_class.base_dn:
+            dn = '%s=%s,%s' % (node_class.rdn, uid, node_class.base_dn)
+        else:
+            raise AttributeError("rdn or base_dn not set for %s" % node_class)
         return node_class(dn=dn, conn=self)
 
     def get_node(self, dn, node_class=None):
@@ -209,6 +224,7 @@ class Connection(object):
 
 
     def save(self, node):
+        """save a node"""
         if node._data and node.dn:
             node._conn = self
             attrs = node._data.copy()
@@ -225,6 +241,7 @@ class Connection(object):
                 return True
 
     def add(self, node):
+        """add a new node"""
         node._conn = self
         attrs = node._defaults.copy()
         for k, v in node._data.items():
@@ -243,6 +260,7 @@ class Connection(object):
             node._data = None
 
     def delete(self, node):
+        """delete a node"""
         node._data = None
         self._conn.delete(node.dn)
 

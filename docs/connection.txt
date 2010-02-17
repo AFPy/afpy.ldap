@@ -12,3 +12,4 @@ Here is the .ini file:
    :members:
 
 
+.. autofunction:: ldapconnection_from_config

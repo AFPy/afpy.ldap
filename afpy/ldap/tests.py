@@ -4,9 +4,11 @@ import datetime
 import afpy.ldap
 import afpy.ldap.utils
 import afpy.ldap.wsgi
+from afpy.ldap import custom
 from webtest import TestApp
 
 ldap = afpy.ldap.Connection(section='afpy')
+ldap.bind(custom.User, custom.Group)
 
 def test_datetime_serializer():
     date = afpy.ldap.utils.to_python('20100504122300Z', klass=datetime.datetime)
@@ -66,7 +68,7 @@ def test_groups():
     assert ldap.config.tests.group in user.groups
 
     group = ldap.get_group(ldap.config.tests.group)
-    assert user._dn in group.member
+    assert user.dn in group.member
 
 app = TestApp(afpy.ldap.wsgi.application)
 

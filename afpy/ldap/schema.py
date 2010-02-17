@@ -3,6 +3,8 @@ __doc__ = """You can map your :class:`~afpy.ldap.node.Node` properties::
 
     >>> from afpy.ldap import node
     >>> class MyUser(node.Node):
+    ...     _rdn = 'uid'
+    ...     _base_dn = 'ou=members,dc=afpy,dc=org'
     ...     uid = StringProperty('uid', title='login', required=True)
     ...     birthDate = DateProperty('birthDate', title='login', required=True)
     >>> from afpy.ldap import custom as ldap
@@ -34,7 +36,7 @@ class Attribute(property):
 
     def __init__(self, name):
         self.name = name
-        self.__doc__ = ':class:`~afpy.ldap.schema.%s` for ldap field ``%s``' % (self.__class__.__name__, name)
+        self.__doc__ = ':class:`~afpy.ldap.schema.%s` for ``_%s``' % (self.__class__.__name__, name)
 
     def __get__(self, instance, klass):
         if instance is None:
@@ -49,11 +51,11 @@ class ReadonlyAttribute(property):
 
     def __init__(self, name):
         self.name = name
-        self.__doc__ = ':class:`~afpy.ldap.schema.%s` for ldap field ``%s``' % (self.__class__.__name__, name)
+        self.__doc__ = ':class:`~afpy.ldap.schema.%s` for ``_%s``' % (self.__class__.__name__, name)
 
     def __get__(self, instance, klass):
         if instance is None:
-            return self
+            return getattr(klass, '_%s' % self.name, self)
         else:
             return getattr(instance, '_%s' % self.name, self)
 

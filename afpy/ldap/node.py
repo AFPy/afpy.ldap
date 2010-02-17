@@ -11,12 +11,12 @@ import utils
 import sys
 
 class Node(object):
-    """A ldap node:
+    """A LDAP node. Base class for all LDAP objects:
 
     .. sourcecode:: py
 
         >>> node = Node('uid=gawel,dc=afpy,dc=org')
-        >>> print node._dn
+        >>> print node.dn
         uid=gawel,dc=afpy,dc=org
 
     """
@@ -28,9 +28,9 @@ class Node(object):
     _field_types = {}
 
     dn = schema.Dn('dn')
-    rdn = schema.Attribute('rdn')
-    base_dn = schema.Attribute('base_dn')
-    conn = schema.Attribute('conn')
+    rdn = schema.ReadonlyAttribute('rdn')
+    base_dn = schema.ReadonlyAttribute('base_dn')
+    conn = schema.ReadonlyAttribute('conn')
     data = schema.ReadonlyAttribute('data')
 
     def __init__(self, uid=None, dn=None, conn=None, attrs=None):
@@ -75,119 +75,39 @@ class Node(object):
         return props
 
     @classmethod
-    def search(cls, conn=None, **kwargs):
+    def search(cls, conn=None, filter='(objectClass=*)', **kwargs):
+        """search class nodes"""
         options = dict(
             base_dn=cls.base_dn,
-            filter='(objectClass=*)',
+            filter=filter,
             )
         options.update(kwargs)
         conn = conn or cls.conn
         return conn.search_nodes(node_class=cls, **options)
 
     @classmethod
-    def unlimited_search(cls, filter='', f='', results=None):
+    def unlimited_search(cls, filter='', conn=None, **kwargs):
+        """same as search but handle SIZELIMIT_EXCEEDED errors"""
+        conn = conn or cls.conn
         if not filter.startswith('('):
             filter = '(%s)' % filter
-        if results is None:
-            results = []
-        if not f:
-            try:
-                return cls.search(cls.conn, filter=filter)
-            except ldap.SIZELIMIT_EXCEEDED:
-                pass
+        try:
+            return cls.search(cls.conn, filter=filter)
+        except ldap.SIZELIMIT_EXCEEDED:
+            pass
+        results = []
         for l in string.ascii_lowercase:
             try:
                 results.extend(
-                   cls.search(cls.conn, filter='(&(%s=%s%s*)%s)' % (cls.rdn, f, l, filter))
+                   cls.search(filter='(&(%s=%s%s*)%s)' % (cls.rdn, f, l, filter), conn=conn)
                    )
             except ldap.SIZELIMIT_EXCEEDED:
                 pass
         return results
 
-    @classmethod
-    def from_config(cls, config, section):
-        """Generate a class from ConfigObject. This is an easy way to subclass Node and define schema.
-
-        Let' create a config object (you may use a file in real life):
-
-        .. sourcecode:: py
-
-            >>> from ConfigObject import ConfigObject
-            >>> config = ConfigObject()
-            >>> config.afpy_user = dict(
-            ...                        rdn='uid',
-            ...                        base_dn='ou=members,dc=afpy,dc=org')
-            >>> config.afpy_user.objectclass = ['top', 'person','associationMember',
-            ...                       'organizationalPerson', 'inetOrgPerson'],
-            >>> config.afpy_user.properties=['name=birthDate, type=date, title= Date de naissance, required=true']
-            >>> config.afpy_user.base_class='afpy.ldap.testing:ExtendedNode'
-
-        Generate the new class:
-
-        .. sourcecode:: py
-
-            >>> klass = Node.from_config(config, 'afpy_user')
-            >>> klass
-            <class 'afpy.ldap.node.AfpyUser'>
-
-        All is ok:
-
-        .. sourcecode:
-
-            >>> klass.birthDate
-            <DateProperty 'birthDate'>
-
-        We can import and use it:
-
-        .. sourcecode:: py
-
-            >>> from afpy.ldap.testing import AfpyUser
-            >>> isinstance(AfpyUser(), Node)
-            True
-            >>> AfpyUser().extended()
-            True
-        """
-        options = config[section]
-        name = section.split(':')[0].replace('_', ' ').title().replace(' ', '')
-        rdn = options.rdn
-        base_dn = options.base_dn
-        defaults = {}
-        attrs = {}
-        defaults['objectClass'] = options.objectclass.as_list()
-        for prop in options.properties.as_list(sep='\n'):
-            args = [p.split('=') for p in prop.split(',')]
-            args = dict([(k.strip(), v.strip()) for k, v in args])
-            pname = args['name']
-            ptype = args.get('type', 'string')
-            ptitle = args.get('title', None)
-            prequired = args.get('required', False)
-            prequired = prequired == 'true' and True or False
-            attrs[pname] = getattr(schema, '%sProperty' % ptype.title())(pname, ptitle, prequired)
-        attrs.update(_rdn=rdn, _base_dn=base_dn,
-                     __doc__='Generated class %s' % section.title())
-        klass = None
-        if options.base_class:
-            mod, klass = options.base_class.split(':')
-            module = __import__(mod, globals(), locals(), [''])
-            klass = getattr(module, klass)
-        klasses = klass and (cls, klass,) or (cls,)
-        new_class = type(name, klasses, attrs)
-        if klass:
-            module.__dict__[new_class.__name__] = new_class
-            return getattr(module, new_class.__name__)
-        return new_class
-
     def bind(self, conn):
-        """rebind node to conn"""
+        """rebind instance to conn"""
         self._conn = conn
-
-    @classmethod
-    def get_node(cls, conn, uid):
-        if '=' in uid:
-            dn = uid
-        else:
-            dn = '%s=%s,%s' % (cls._rdn, uid, cls._base_dn)
-        return conn.get_node(dn, node_class=cls)
 
     def save(self):
         """save node"""
@@ -220,7 +140,6 @@ class Node(object):
             raise AttributeError('%r is not bound to a connection' % self)
 
     def normalized_data(self):
-        """return ldap datas as dict"""
         if self._data:
             return self._data
         if not self._conn:
@@ -239,7 +158,6 @@ class Node(object):
         return self._data
 
     def get(self, attr, default=None):
-        """get a node attribute"""
         value = self.normalized_data().get(attr, default)
         type = self._field_types.get(attr, None)
         if type:
@@ -295,6 +213,7 @@ class Node(object):
         return '<%s at %s>' % (self.__class__.__name__, self.dn)
 
     def pprint(self, encoding=utils.DEFAULT_ENCODING, show_dn=True):
+        """pretty print"""
         out = []
         out.append(self.cn)
         out.append('-'*len(self.cn))
@@ -312,10 +231,11 @@ class Node(object):
         return '\n'.join(out)
 
 class User(Node):
+    """base class for user nodes"""
 
     def check(self, password):
         """check credential by binding a new connection"""
-        return self._conn.check(self._dn, password)
+        return self._conn.check(self.dn, password)
 
     def change_password(self, passwd, scheme='ssha', charset='utf-8', multiple=0):
         """allow to change password"""
@@ -334,6 +254,7 @@ class User(Node):
         return self._conn.get_groups(self._dn)
 
 class GroupOfNames(Node):
+    """base class for group nodes"""
     _rdn = 'cn'
 
     member = schema.SetProperty('member', title='Members')
@@ -352,6 +273,7 @@ class GroupOfNames(Node):
         return '\n'.join(out)
 
 class OrganizationalUnit(Node):
+    """base class for Organizational Unit nodes"""
     _rdn = 'ou'
     _defaults = {'objectClass': ['organizationalUnit', 'top']}
     ou = schema.StringProperty('ou', required=True)
