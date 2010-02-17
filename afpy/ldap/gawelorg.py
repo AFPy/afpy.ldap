@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-from afpy.ldap.connection import Connection as BaseConnection
-from afpy.ldap.node import Node
 from afpy.ldap.node import User as BaseUser
-from afpy.ldap.utils import to_string, to_python
 from afpy.ldap.scripts import shell
 from afpy.ldap import schema
 import sys
+import os
 
 class User(BaseUser):
     _rdn = 'uid'
@@ -16,12 +14,12 @@ class User(BaseUser):
        )
 
     mail=schema.StringProperty('mail', title='E-mail', required=True)
-    birthDate=schema.DateProperty('birthDate', title="Date de naissance", required=True)
-    telephoneNumber=schema.StringProperty('telephoneNumber', title='Tel.', required=True)
-    mobile=schema.StringProperty('mobile', title='Port.', required=True)
-    postalAddress=schema.UnicodeProperty('postalAddress', title='Adresse', required=True)
-    postalCode=schema.StringProperty('postalCode', title='CP', required=True)
-    description=schema.StringProperty('description', title='Extra', required=True)
+    portable=schema.StringProperty('mobile', title='Port.', required=True)
+    tel=schema.StringProperty('telephoneNumber', title='Tel.', required=True)
+    address=schema.UnicodeProperty('postalAddress', title='Adresse', required=True)
+    cp=schema.StringProperty('postalCode', title='CP', required=True)
+    ville=schema.StringProperty('l', title='Ville', required=True)
+    extra=schema.StringProperty('description', title='Extra', required=True)
 
     def pprint(self, *args, **kwargs):
         kwargs.update(show_dn=False)
@@ -37,13 +35,17 @@ def add_user(self, parameter_s=''):
     u.uid = uid
     u.cn = cn
     u.givenName, u.sn = cn.split(' ')
-    __IPYTHON__.api.to_user_ns('u')
+    shell.api.to_user_ns('u')
     print u.pprint()
 
-def write(self, parameter_s=''):
+def contacts(self, parameter_s=''):
     """write users with phone in a file"""
     shell.search(User, '(|(mobile=*)(telephoneNumber=*))')
-    filename = parameter_s or 'contacts.txt'
+    if os.path.isdir('/Volumes/iPod/Notes'):
+        filename = '/Volumes/iPod/Notes/contacts'
+    else:
+        filename = 'contacts.txt'
+    filename = parameter_s or filename
     fd = open(filename, 'w')
     fd.write(shell.nodes['User'].pprint('utf-8'))
     fd.close()
@@ -51,9 +53,10 @@ def write(self, parameter_s=''):
 
 def main():
     def callback():
-        shell.expose_magic('add_user', add_user)
-        shell.expose_magic('write', write)
+        shell.expose_magic(add_user)
+        shell.expose_magic(contacts)
         shell.search(User, '-')
-        print shell.nodes['User'].pprint()
     shell(section='gawel', classes=(User,), callback=callback)
 
+if __name__ == '__main__':
+    main()

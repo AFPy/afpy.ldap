@@ -34,6 +34,7 @@ class Attribute(property):
 
     def __init__(self, name):
         self.name = name
+        self.__doc__ = ':class:`~afpy.ldap.schema.%s` for ldap field ``%s``' % (self.__class__.__name__, name)
 
     def __get__(self, instance, klass):
         if instance is None:
@@ -44,17 +45,31 @@ class Attribute(property):
     def __set__(self, instance, value):
         setattr(instance.__class__, '_%s' % self.name, value)
 
-class Dn(Attribute):
-    """Used to generate dn on new objects. The :class:`~afpy.ldap.node.Node` class already got one::
+class ReadonlyAttribute(property):
 
-    >>> from afpy.ldap import node
-    >>> class MyUser(node.Node):
-    ...     _rdn = 'uid'
-    ...     _base_dn = 'ou=members,dc=afpy,dc=org'
-    >>> user = MyUser()
-    >>> user.uid = 'gawel'
-    >>> user.dn
-    'uid=gawel,ou=members,dc=afpy,dc=org'
+    def __init__(self, name):
+        self.name = name
+        self.__doc__ = ':class:`~afpy.ldap.schema.%s` for ldap field ``%s``' % (self.__class__.__name__, name)
+
+    def __get__(self, instance, klass):
+        if instance is None:
+            return self
+        else:
+            return getattr(instance, '_%s' % self.name, self)
+
+class Dn(Attribute):
+    """Used to generate dn on new objects. The :class:`~afpy.ldap.node.Node` class already got one:
+
+    .. sourcecode:: py
+
+        >>> from afpy.ldap import node
+        >>> class MyUser(node.Node):
+        ...     _rdn = 'uid'
+        ...     _base_dn = 'ou=members,dc=afpy,dc=org'
+        >>> user = MyUser()
+        >>> user.uid = 'gawel'
+        >>> user.dn
+        'uid=gawel,ou=members,dc=afpy,dc=org'
 
     """
 
@@ -84,6 +99,7 @@ class Property(property):
         self.required = required
         Property.count += 1
         self.order = Property.count
+        self.__doc__ = ':class:`~afpy.ldap.schema.%s` for ldap field ``%s``' % (self.__class__.__name__, name)
 
     def __get__(self, instance, klass):
         if instance is None:
@@ -164,6 +180,7 @@ class SetOfNodesProperty(SetProperty):
         if node_class is None:
             raise TypeError('node_class is required for %s property' % self.__class__.__name__)
         self.item_klass = node_class
+        self.__doc__ = ':class:`~afpy.ldap.schema.%s` for ldap field ``%s``. Contains ``%s`` objects' % (self.__class__.__name__, name, node_class.__name__)
 
     def _to_python(self, value, instance=None):
         value = self.klass(value or [])

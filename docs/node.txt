@@ -13,3 +13,6 @@
 .. autoclass:: GroupOfNames
    :members:
 
+.. autoclass:: OrganizationalUnit
+   :members:
+

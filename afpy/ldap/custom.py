@@ -272,5 +272,39 @@ class Group(GroupOfNames):
 
 def main():
     from afpy.ldap.scripts import shell
-    shell(section='afpy', classes=(User, Group))
+
+    def expired_members(self, parameter_s=''):
+        """return ids of expired users"""
+        members = getExpiredUsers()
+        shell.api.to_user_ns('members')
+        return ('members', len(members))
+
+    def active_members(self, parameter_s=''):
+        """return ids of active members"""
+        members = getAdherents()
+        shell.api.to_user_ns('members')
+        return ('members', len(members))
+
+    def all_members(self, parameter_s=''):
+        """return ids of members with one payment"""
+        members = getAllTimeAdherents()
+        shell.api.to_user_ns('members')
+        return ('members', len(members))
+
+    def awaiting_payments(self, parameter_s=''):
+        """return ids of members with one awayting payment"""
+        members = getAwaitingPayments()
+        shell.api.to_user_ns('members')
+        return ('members', len(members))
+
+    def callback():
+        for f in (expired_members, active_members,
+                  all_members, awaiting_payments):
+            shell.expose_magic(f)
+        shell.search(Group, '-')
+
+    shell(section='afpy', classes=(User, Group), callback=callback)
+
+if __name__ == '__main__':
+    main()
 

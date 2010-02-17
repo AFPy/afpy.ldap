@@ -11,6 +11,14 @@ import base64
 import ldap
 import sys
 
+class Shell(IPShellEmbed):
+    def __init__(self, section=''):
+        argv = [
+                 '-prompt_in1','\C_Blue\#) \C_Greenldap/%s\$ ' % section,
+               ]
+        IPShellEmbed.__init__(self,argv,banner='',exit_msg=None,rc_override=None,
+                 user_ns=None)
+
 node.Node.__str__ = lambda s: s.pprint()
 
 class User(node.User):
@@ -47,10 +55,25 @@ class Nodes(dict):
             self[uid] = a
             self.__dict__[uid] = a
 
+    def values(self):
+        return [self[k] for k in sorted(self.keys())]
+
     def __getattr__(self, attr):
-        if attr in self:
+        if attr in self.keys():
             return self[attr]
         raise AttributeError(attr)
+
+    def __getitem__(self, i):
+        if isinstance(i, int):
+            return self.values()[i]
+        else:
+            return dict.__getitem__(self, i)
+
+    def __getslice__(self, i, j):
+        nodes = Nodes()
+        args = self.values()[i:j]
+        nodes.update(args)
+        return nodes
 
     def __delattr__(self, attr):
         a = getattr(self, attr)
@@ -62,9 +85,11 @@ class Nodes(dict):
             del self[attr]
             del self.__dict__[attr]
 
+    def __iter__(self):
+        return self.itervalues()
+
     def __repr__(self):
-        nodes = [self[uid] for uid in sorted(self.keys())]
-        return repr([getattr(n, n.rdn) for n in nodes])
+        return repr(sorted(self.keys()))
 
     def __str__(self):
         return self.pprint()
@@ -89,7 +114,7 @@ def search(klass):
         shell.update_nodes(klass, nodes)
         u = len(nodes) == 1 and nodes[0] or None
         shell.api.to_user_ns('u')
-        return (('u', u), (klass.__name__.lower(), len(shell.nodes[klass.__name__])))
+        return (('u', u), ('%ss' % klass.__name__.lower(), len(shell.nodes[klass.__name__])))
     return wrapper
 
 def save(*args):
@@ -124,9 +149,9 @@ class shell(object):
     def __init__(self, section=None, classes=None, callback=None):
         cls = self.__class__
         sys.argv = sys.argv[0:1]
-        ipshell = IPShellEmbed()
+        ipshell = Shell(section)
         cls.parser.usage = """%prog [-s SECTION] """ + cls.help()
-        if not cls.section:
+        if not section:
             cls.parser.parse_args(['-h'])
         else:
             cls.section = section
@@ -162,8 +187,8 @@ class shell(object):
                 if base_dn:
                     klass.base_dn = base_dn
             cls.nodes[name] = type(name, (Nodes,), {})()
-            exec '%s = cls.nodes[%r]' % (lname, name)
-            cls.api.to_user_ns(lname)
+            exec '%ss = cls.nodes[%r]' % (lname, name)
+            cls.api.to_user_ns('%ss' % lname)
             exec '%s = klass' % (name,)
             cls.api.to_user_ns(name)
             cls.api.expose_magic('search_%s' % lname, search(klass))
@@ -182,6 +207,9 @@ class shell(object):
 
     @classmethod
     def expose_magic(cls, *args):
+        if not isinstance(args[0], basestring):
+            func = args[0]
+            args = (func.func_name, func)
         cls.magics.append(args)
         cls.api.expose_magic(*args)
 
@@ -194,16 +222,16 @@ class shell(object):
 Available classes
 =================
 """
-        for name in cls.nodes:
+        for name, nodes in cls.nodes.items():
             lname = name.lower()
             sep = '-'*len(name)
             out += """
 %(name)s
 %(sep)s
 
-    >>> %(lname)s
-    []
-    >>> %%search_%(lname)s string_to_search
+    >>> %(lname)ss
+    %(nodes)r
+    >>> %%search_%(lname)s [string|ldap filter]
 """ % locals()
 
         if cls.magics:
@@ -216,7 +244,7 @@ Other commands
             doc = doc and '# %s' % doc or ''
             doc = doc.strip()
             out += """
-    >>> %%%(name)-15.15s %(doc)s
+    >>> %%%(name)-20.20s %(doc)s
 """ % locals()
         return out
 

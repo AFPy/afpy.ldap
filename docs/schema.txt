@@ -3,6 +3,9 @@
 
 .. automodule:: afpy.ldap.schema
 
+Properties
+----------
+
 .. autoclass:: StringProperty
 
 .. autoclass:: IntegerProperty
@@ -10,3 +13,18 @@
 .. autoclass:: DateTimeProperty
 
 .. autoclass:: DateProperty
+
+.. autoclass:: ListProperty
+
+.. autoclass:: SetProperty
+
+.. autoclass:: SetOfNodesProperty
+
+Attributes
+----------
+
+.. autoclass:: Attribute
+
+.. autoclass:: ReadonlyAttribute
+
+.. autoclass:: Dn

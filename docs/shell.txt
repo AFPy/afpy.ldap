@@ -1,0 +1,63 @@
+:mod:`afpy.ldap.scripts` -- LDAP Shell
+=======================================
+
+.. automodule:: afpy.ldap.scripts
+
+Build your own IPython based shell to admin your LDAP database.
+
+Sample session
+--------------
+
+Here is a ipython session based on the script bellow::
+
+  $ python afpy/ldap/gawelorg.py
+  Available classes
+  =================
+
+  User
+  ----
+
+      >> users
+      ['gawel', ...]
+      >> %search_user [string|ldap filter]
+
+  Other commands
+  ==============
+
+      >> %save                 # Save all loaded nodes
+
+      >> %add_user             # add a user (uid as optional parameter)
+
+      >> %contacts             # write users with phone in a file
+
+  1) ldap/gawel$ %search_user ga   
+             <1> (('u', None), ('users', 3))
+  2) ldap/gawel$ users
+             <2> ['gamin', 'gawel', 'gab']
+  3) ldap/gawel$ %search_user toto
+             <3> (('u', <User at uid=toto,ou=people,dc=gawel,dc=org>), ('users', 1))
+  4) ldap/gawel$ users.toto.mail = 'toto@example.com'
+  5) ldap/gawel$ save
+  toto saved
+  6) ldap/gawel$ u.mail
+             <6> 'toto@example.com'
+  7) ldap/gawel$ del users.toto
+  8) ldap/gawel$ %search_user toto
+             <8> (('u', None), ('users', 0))
+  9) ldap/gawel$ %contacts
+  /Volumes/iPod/Notes/contacts saved
+
+Simple Script
+-------------
+
+Here is a sample script used for a personal database:
+
+.. literalinclude:: ../afpy/ldap/gawelorg.py
+
+Advanced script
+---------------
+
+Here is a complex script used for http://www.afpy.org:
+
+.. literalinclude:: ../afpy/ldap/custom.py
+

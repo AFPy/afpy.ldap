@@ -34,7 +34,7 @@ class UnicodeSerializer(object):
     @classmethod
     def to_python(cls, value):
         """convert string to python object"""
-        for encoding in cls.encodings:
+        for encoding in cls.encodings + [DEFAULT_ENCODING]:
             try:
                 return value.decode(encoding)
             except Exception, e:
@@ -44,7 +44,7 @@ class UnicodeSerializer(object):
     @classmethod
     def to_string(cls, value):
         """convert string to python object"""
-        for encoding in cls.encodings:
+        for encoding in cls.encodings + [DEFAULT_ENCODING]:
             try:
                 return value.encode(encoding)
             except Exception, e:

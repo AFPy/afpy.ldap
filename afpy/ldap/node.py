@@ -11,7 +11,9 @@ import utils
 import sys
 
 class Node(object):
-    """A ldap node::
+    """A ldap node:
+
+    .. sourcecode:: py
 
         >>> node = Node('uid=gawel,dc=afpy,dc=org')
         >>> print node._dn
@@ -29,6 +31,7 @@ class Node(object):
     rdn = schema.Attribute('rdn')
     base_dn = schema.Attribute('base_dn')
     conn = schema.Attribute('conn')
+    data = schema.ReadonlyAttribute('data')
 
     def __init__(self, uid=None, dn=None, conn=None, attrs=None):
         object.__init__(self)
@@ -105,7 +108,9 @@ class Node(object):
     def from_config(cls, config, section):
         """Generate a class from ConfigObject. This is an easy way to subclass Node and define schema.
 
-        Let' create a config object (you may use a file in real life)::
+        Let' create a config object (you may use a file in real life):
+
+        .. sourcecode:: py
 
             >>> from ConfigObject import ConfigObject
             >>> config = ConfigObject()
@@ -117,18 +122,24 @@ class Node(object):
             >>> config.afpy_user.properties=['name=birthDate, type=date, title= Date de naissance, required=true']
             >>> config.afpy_user.base_class='afpy.ldap.testing:ExtendedNode'
 
-        Generate the new class::
+        Generate the new class:
+
+        .. sourcecode:: py
 
             >>> klass = Node.from_config(config, 'afpy_user')
             >>> klass
             <class 'afpy.ldap.node.AfpyUser'>
 
-        All is ok::
+        All is ok:
+
+        .. sourcecode:
 
             >>> klass.birthDate
             <DateProperty 'birthDate'>
 
-        We can import and use it::
+        We can import and use it:
+
+        .. sourcecode:: py
 
             >>> from afpy.ldap.testing import AfpyUser
             >>> isinstance(AfpyUser(), Node)
@@ -179,6 +190,7 @@ class Node(object):
         return conn.get_node(dn, node_class=cls)
 
     def save(self):
+        """save node"""
         conn = self._conn or self.conn
         if conn and self._dn:
             try:
@@ -189,6 +201,7 @@ class Node(object):
             raise RuntimeError('%r is not bind to a connection' % self)
 
     def append(self, node, save=True):
+        """append a subnode"""
         if self.dn:
             if node.rdn:
                 value = utils.to_string(getattr(node, node.rdn))
@@ -337,3 +350,9 @@ class GroupOfNames(Node):
         for u in users:
             out.append(getattr(u, u.rdn))
         return '\n'.join(out)
+
+class OrganizationalUnit(Node):
+    _rdn = 'ou'
+    _defaults = {'objectClass': ['organizationalUnit', 'top']}
+    ou = schema.StringProperty('ou', required=True)
+

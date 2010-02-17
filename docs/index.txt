@@ -10,11 +10,14 @@ This module provide an easy way to deal with ldap stuff in python.
 
 .. include:: ../README.txt
 
+You can also play with LDAP in IPython. See :doc:`shell`
+
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
+   shell
    connection
    node
    schema
