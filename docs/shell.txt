@@ -5,6 +5,8 @@
 
 Build your own IPython based shell to admin your LDAP database.
 
+First read :doc:`install` and be sure that you have a ``~/.ldap.cfg``.
+
 Sample session
 --------------
 
@@ -53,6 +55,7 @@ Simple Script
 Here is a sample script used for a personal database:
 
 .. literalinclude:: ../afpy/ldap/gawelorg.py
+   :language: py
 
 Advanced script
 ---------------
@@ -60,4 +63,5 @@ Advanced script
 Here is a complex script used for http://www.afpy.org:
 
 .. literalinclude:: ../afpy/ldap/custom.py
+   :language: py
 

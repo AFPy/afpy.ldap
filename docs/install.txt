@@ -1,0 +1,24 @@
+Installation and configuration
+===============================
+
+Using ``easy_install``::
+
+  $ easy_install afpy.ldap
+
+Edit your ``~/.ldap.cfg``:
+
+.. literalinclude:: ldap.cfg
+   :language: ini
+
+Try ``ldapsh`` script (see :doc:`shell`)::
+
+  $ ldapsh -h
+  Usage: ldapsh [options]
+
+  Options:
+    -h, --help            show this help message and exit
+    -s SECTION, --section=SECTION
+                          A config section to get ldap info from
+
+  $ ldapsh -s afpy
+
