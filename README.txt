@@ -2,13 +2,13 @@ This module is actively used on http://www.afpy.org to manage the french python 
 
 The following examples show all features of the package. If you just want to
 give it a try in a quickest way read `Installation and configuration
-<https://hg.afpy.org/gawel/afpy.ldap/install.html>`_ from the Sphinx
+<http://hg.afpy.org/gawel/afpy.ldap/install.html>`_ from the Sphinx
 documentation.
 
 
 Get a connection (this custom afpy connection get is configuration from a
 `~/.ldap.ini` file. See `Installation and configuration
-<https://hg.afpy.org/gawel/afpy.ldap/install.html>`_)::
+<http://hg.afpy.org/gawel/afpy.ldap/install.html>`_)::
 
     >>> from afpy.ldap import custom as ldap
     >>> conn = ldap.get_conn()
@@ -59,7 +59,7 @@ This also allow to generate forms with FormAlchemy_::
 
 The source code can be find on the `AFPy repository`_
 
-.. _AFPy repository: https://hg.afpy.org/gawel/afpy.ldap/summary
+.. _AFPy repository: http://hg.afpy.org/gawel/afpy.ldap/summary
 
 Got a bug, feature request ? Want to send beer because you love it ? Send an
 email at afpy-web@lists.afpy.org
