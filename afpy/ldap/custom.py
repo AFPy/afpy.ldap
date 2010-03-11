@@ -10,7 +10,7 @@ Get myself::
 
     >>> user = conn.get_user('gawel')
     >>> user
-    <AfpyUser at uid=gawel,ou=members,dc=afpy,dc=org>
+    <User at uid=gawel,ou=members,dc=afpy,dc=org>
 
 """
 import datetime
@@ -90,7 +90,7 @@ class Payment(Node):
     paymentAmount = schema.IntegerProperty('paymentAmount', title='Montant', required=True)
     invoiceReference = schema.StringProperty('invoiceReference', title='Reference')
 
-class AfpyUser(BaseUser):
+class User(BaseUser):
     """
     Specific node for afpy member
 
@@ -104,9 +104,9 @@ class AfpyUser(BaseUser):
 
     Try to add one. We need the conn to retrieve the correct dn from uid:
 
-        >>> user = ldap.AfpyUser('afpy_test_user', attrs=dict(cn='Test AfpyUser', sn='Test'), conn=conn)
+        >>> user = ldap.User('afpy_test_user', attrs=dict(cn='Test User', sn='Test'), conn=conn)
         >>> user
-        <AfpyUser at uid=afpy_test_user,ou=members,dc=afpy,dc=org>
+        <User at uid=afpy_test_user,ou=members,dc=afpy,dc=org>
         >>> conn.add(user)
 
         >>> user.change_password('toto')
@@ -115,7 +115,7 @@ class AfpyUser(BaseUser):
 
         >>> user = conn.get_user('afpy_test_user')
         >>> user
-        <AfpyUser at uid=afpy_test_user,ou=members,dc=afpy,dc=org>
+        <User at uid=afpy_test_user,ou=members,dc=afpy,dc=org>
         >>> conn.delete(user)
 
     """
@@ -168,8 +168,12 @@ class AfpyUser(BaseUser):
         return True
 
     def append(self, node, save=True):
-        super(AfpyUser, self).append(node, save=save)
+        super(User, self).append(node, save=save)
         updateExpirationDate(self)
+
+class Group(GroupOfNames):
+    _rdn = 'cn'
+    _base_dn = 'ou=groups,dc=afpy,dc=org'
 
 
 
@@ -177,13 +181,14 @@ def get_conn():
     """return a ldap connection"""
     class Connection(BaseConnection):
         """Specific connection"""
-        user_class = AfpyUser
+        user_class = User
+        group_class = Group
     return Connection(section='afpy')
 
 def getUser(uid):
     """
     >>> getUser('gawel')
-    <AfpyUser at uid=gawel,ou=members,dc=afpy,dc=org>
+    <User at uid=gawel,ou=members,dc=afpy,dc=org>
     >>> getUser('lskdslmdgkmdglsldjggsdgjsk')
     """
     user = get_conn().get_user(str(uid))
@@ -196,7 +201,7 @@ def getUser(uid):
 
 def getUserByTitle(title):
     conn = get_conn()
-    res = conn.search_nodes(filter='(title=%s)' % title, node_class=AfpyUser)
+    res = conn.search_nodes(filter='(title=%s)' % title, node_class=User)
     return res[0]
 
 def getAdherents(min=365, max=None):
@@ -260,15 +265,9 @@ def applyToMembers(callback, filter=None):
     else:
         filter='(uid=%s*)' % filter
     for l in string.lowercase:
-        users = conn.search_nodes(node_class=AfpyUser, filter = filter % l)
+        users = conn.search_nodes(node_class=User, filter = filter % l)
         for u in users:
             callback(u)
-
-class User(AfpyUser): pass
-
-class Group(GroupOfNames):
-    _rdn = 'cn'
-    _base_dn = 'ou=groups,dc=afpy,dc=org'
 
 def main():
     from afpy.ldap.scripts import shell

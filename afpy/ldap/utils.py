@@ -6,6 +6,18 @@ DEFAULT_ENCODING = getattr(sys.stdout, 'encoding', 'utf-8')
 
 _serializers = []
 
+def resolve_class(entry_point):
+    """Resolve a dotted name:
+
+    .. sourcecode::
+
+        >>> resolve_class('afpy.ldap.custom:User')
+        <class 'afpy.ldap.custom.User'>
+
+    """
+    mode_name, class_name = entry_point.split(':')
+    mod = __import__(mode_name, globals(), locals(), [class_name], -1)
+    return getattr(mod, class_name)
 
 def register_serializer(klass):
     """add a new serializer to the list

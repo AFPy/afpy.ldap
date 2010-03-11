@@ -5,13 +5,13 @@ __doc__ = """This module allow to generate forms from :class:`~afpy.ldap.node.No
     >>> user = ldap.getUser('gawel')
     >>> user.uid
     'gawel'
-    >>> fs = FieldSet(ldap.AfpyUser)
+    >>> fs = FieldSet(ldap.User)
     >>> fs.configure(include=[fs.uid])
     >>> fs = fs.bind(user)
     >>> print fs.render().strip() #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     <div>
-      <label class="field_req" for="AfpyUser-gawel-uid">Login</label>
-      <input id="AfpyUser-gawel-uid" name="AfpyUser-gawel-uid" type="text" value="gawel" />
+      <label class="field_req" for="User-gawel-uid">Login</label>
+      <input id="User-gawel-uid" name="User-gawel-uid" type="text" value="gawel" />
     </div>
     ...
 
@@ -20,7 +20,10 @@ For more informations on how this works look the FormAlchemy_'s documentation.
 .. _FormAlchemy: http://docs.formalchemy.org
 
 """
-from formalchemy.forms import FieldSet as BaseFieldSet
+try:
+    from formalchemy.forms import FieldSet as BaseFieldSet
+except ImportError:
+    raise ImportError('FormAlchemy is required')
 from formalchemy.tables import Grid as BaseGrid
 from formalchemy.fields import Field as BaseField
 from formalchemy.base import SimpleMultiDict
@@ -146,26 +149,26 @@ def test_fieldset():
     from afpy.ldap import custom as ldap
     user = ldap.getUser('gawel')
 
-    fs = FieldSet(ldap.AfpyUser)
+    fs = FieldSet(ldap.User)
     fs = fs.bind(user)
 
     # rendering
     assert fs.uid.is_required() == True, fs.uid.is_required()
     assert fs.uid.value == 'gawel'
     html = fs.render()
-    assert 'class="field_req" for="AfpyUser-gawel-uid"' in html, html
+    assert 'class="field_req" for="User-gawel-uid"' in html, html
     assert 'value="gawel"' in html, html
 
     # syncing
     fs.configure(include=[fs.uid])
-    fs.rebind(user, data={'AfpyUser-gawel-uid':'minou'})
+    fs.rebind(user, data={'User-gawel-uid':'minou'})
     fs.validate()
     fs.sync()
     assert fs.uid.value == 'minou', fs.render_fields
     assert user.uid == 'minou', user.uid
 
     # grid
-    fs = Grid(ldap.AfpyUser, [user, ldap.AfpyUser()])
+    fs = Grid(ldap.User, [user, ldap.User()])
     html = fs.render()
     assert '<thead>' in html, html
     assert 'value="minou"' in html, html

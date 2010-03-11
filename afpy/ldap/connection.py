@@ -8,14 +8,18 @@ __doc__ = """This module provide a ldap connection configurable via a .ini file
     [<Node at uid=gawel,ou=members,dc=afpy,dc=org>]
 
 """
-from dataflake.ldapconnection.connection import LDAPConnection
+import ldap
+import ldap.ldapobject
+import _ldap
 from ConfigObject import ConfigObject
 from ConfigParser import NoOptionError
 from node import Node, User, GroupOfNames
 from ldap.ldapobject import ReconnectLDAPObject
-import ldap
-import _ldap
+from afpy.ldap.utils import resolve_class
+import logging
 import os
+
+log = logging.getLogger(__name__)
 
 class SmartLDAPObject(ReconnectLDAPObject):
   """
@@ -116,6 +120,15 @@ class Connection(object):
         except Exception, e:
             raise e.__class__('Invalid configuration %s - %s' % (section, self.section))
 
+        for name in ('user', 'group', 'node'):
+            attr = '%s_class' % name
+            klass = self.get('%s_class' % name, None)
+            if klass:
+                klass = resolve_class(klass)
+                if getattr(self, attr) is not klass:
+                    setattr(self, attr, klass)
+                    self.bind(klass)
+                    log.warn('Setting %s to %s', attr, klass)
 
     def get(self, key, default=None):
         try:
@@ -263,6 +276,11 @@ class Connection(object):
         """delete a node"""
         node._data = None
         self._conn.delete(node.dn)
+
+if not getattr(ldap.ldapobject, 'SmartLDAPObject', None):
+    # LDAPConnection need this in 1.0b1
+    ldap.ldapobject.SmartLDAPObject = SmartLDAPObject
+from dataflake.ldapconnection.connection import LDAPConnection
 
 def ldapconnection_from_config(config, prefix='ldap.', **kwargs):
     """This is useful to get an LDAPConnection from a ConfigParser section

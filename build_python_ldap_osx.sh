@@ -1,7 +1,7 @@
 #!/bin/python
 
 LDAP="2.4.21"
-PYLDAP="2.3.10"
+PYLDAP="2.3.11"
 PYTHON="python2.5"
 
 DIR="$PWD/openldap-$LDAP"

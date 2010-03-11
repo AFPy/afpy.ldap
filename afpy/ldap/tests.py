@@ -3,9 +3,7 @@ import unittest
 import datetime
 import afpy.ldap
 import afpy.ldap.utils
-import afpy.ldap.wsgi
 from afpy.ldap import custom
-from webtest import TestApp
 
 ldap = afpy.ldap.Connection(section='afpy')
 ldap.bind(custom.User, custom.Group)
@@ -69,22 +67,4 @@ def test_groups():
 
     group = ldap.get_group(ldap.config.tests.group)
     assert user.dn in group.member
-
-app = TestApp(afpy.ldap.wsgi.application)
-
-def test_perm():
-    try:
-        response = app.get('/')
-    except:
-        pass
-    else:
-        raise AssertionError()
-
-def test_index():
-    response = app.get('/', extra_environ={'REMOTE_USER':'gawel'})
-    assert response.status == '200 OK', response
-
-def test_page():
-    response = app.get('/a', extra_environ={'REMOTE_USER':'gawel'})
-    assert response.status == '200 OK', response
 

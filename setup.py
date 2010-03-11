@@ -45,12 +45,8 @@ afpy.ldap
       install_requires=[
           'setuptools',
           # -*- Extra requirements: -*-
-          'WebOb',
-          'WebTest',
           'ConfigObject',
-          'Formalchemy',
           'dataflake.ldapconnection>0.9',
-          'repoze.what',
       ],
       entry_points="""
       # -*- Entry points: -*-
