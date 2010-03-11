@@ -53,6 +53,9 @@ afpy.ldap
       [console_scripts]
       ldapsh = afpy.ldap.scripts:main
 
+      [paste.app_factory]
+      test = afpy.ldap.test_auth:make_test_app
+
       [paste.filter_app_factory]
       main = afpy.ldap.authbasic:make_auth_basic
       """,

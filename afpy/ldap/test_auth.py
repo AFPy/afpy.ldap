@@ -12,6 +12,8 @@ def application(environ, start_response):
     resp = Response()
     resp.content_type = 'text/plain'
     resp.body = 'anonymous'
+    if req.path_info == '/auth' and not environ.get('repoze.what.credentials'):
+        return exc.HTTPUnauthorized()(environ, start_response)
     if req.path_info == '/secure':
         body = ''
         cred = environ.get('repoze.what.credentials', {})
@@ -23,6 +25,9 @@ def application(environ, start_response):
             body += 'has_permision(%r): %s\n' % (perm, has_permission(perm).is_met(environ))
         resp.body = body
     return resp(environ, start_response)
+
+def make_test_app(*args, **kwargs):
+    return application
 
 conn = ldap.get_conn()
 
