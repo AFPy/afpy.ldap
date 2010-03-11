@@ -10,6 +10,11 @@ Edit your ``~/.ldap.cfg``:
 .. literalinclude:: ldap.cfg
    :language: ini
 
+Add a ``myldap.py`` module to your  ``PYTHON_PATH``
+
+.. literalinclude:: myldap.py
+   :language: py
+
 Try ``ldapsh`` script (see :doc:`shell`)::
 
   $ ldapsh -h
@@ -20,5 +25,5 @@ Try ``ldapsh`` script (see :doc:`shell`)::
     -s SECTION, --section=SECTION
                           A config section to get ldap info from
 
-  $ ldapsh -s afpy
+  $ ldapsh -s myldap
 

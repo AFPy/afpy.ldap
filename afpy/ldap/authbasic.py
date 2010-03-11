@@ -8,6 +8,28 @@ from afpy.ldap.connection import Connection
 from afpy.ldap import auth
 import os
 
+__doc__ = """
+This module contain a paste entry point example with basic auth.
+
+You can use it in you app. Once you have read :doc:`../install` you can use this
+in your paste config file:
+
+.. sourcecode:: ini
+
+    [filter:auth]
+    use = egg:afpy.ldap
+    section = afpy
+
+    # and if you dont want to use ~/.ldap.cfg
+    #file = %(here)s/ldap.cfg
+
+You can also adapt this code and use your own identifiers/challengers:
+
+.. literalinclude:: ../../afpy/ldap/authbasic.py
+   :language: py
+
+"""
+
 def make_auth_basic(app, global_config, conn=None, **local_conf):
     """Paste entry point for auth basic middleware using repoze.what"""
 

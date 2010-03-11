@@ -10,6 +10,8 @@ from afpy.ldap.connection import Connection
 from zope.interface import implements
 import os
 
+__doc__ = """This is a set of plugins for repoze.what"""
+
 CONNECTION_KEY = 'afpy.ldap.connection'
 
 

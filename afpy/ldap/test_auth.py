@@ -32,7 +32,7 @@ class TestAuth(unittest.TestCase):
         user = ldap.User('afpy_test_user', attrs=dict(cn='Test User', sn='Test'), conn=conn)
         conn.add(user)
         user.change_password('toto')
-        app = make_auth_basic(application, {}, conn=conn)
+        app = make_auth_basic(application, {}, section='afpy')
         self.app = TestApp(app)
         self.user = user
 
