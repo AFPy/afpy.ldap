@@ -29,8 +29,9 @@ in your paste config file:
     [app:myapp]
     ...
 
-You can now retrieve the ldap node in the ``repoze.what`` environ vars and the
-:class:`~afpy.ldap.connection.Connection` in ``environ['%s']``
+You can now retrieve the :class:`~afpy.ldap.node.User` in the ``repoze.what``
+environ vars and the :class:`~afpy.ldap.connection.Connection` in
+``environ['%s']``
 
 You can also adapt this code and use your own identifiers/challengers:
 
