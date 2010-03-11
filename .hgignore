@@ -5,6 +5,7 @@ dist
 eggs
 parts
 docs/_build
+docs/modules
 develop-eggs
 .installed.cfg
 *.egg-info

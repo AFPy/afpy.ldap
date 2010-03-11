@@ -22,7 +22,7 @@ import sys, os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc']
+extensions = ['sphinx.ext.autodoc', 'rstctl.sphinx']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -192,3 +192,29 @@ latex_documents = [
 
 # If false, no module index is generated.
 #latex_use_modindex = True
+
+rstctl_exclude = ['afpy.ldap.ldaputil']
+
+# Custom stuff
+try:
+    import rstctl
+    extensions = ['sphinx.ext.autodoc', 'rstctl.sphinx']
+except ImportError:
+    pass
+else:
+    del rstctl
+
+from os import path
+pkg_dir = path.abspath(__file__).split('/docs')[0]
+setup = path.join(pkg_dir, 'setup.py')
+if path.isfile(setup):
+    for line_ in open(setup):
+        if line_.startswith("version"):
+            version = line_.split('=')[-1]
+            version = version.strip()
+            version = version.strip("'\"")
+            release = version
+            break
+del pkg_dir, setup, path
+
+

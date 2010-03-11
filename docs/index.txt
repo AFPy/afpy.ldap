@@ -12,19 +12,15 @@ This module provide an easy way to deal with ldap stuff in python.
 
 You can also play with LDAP in IPython. See :doc:`shell`
 
-Contents:
+Contents
+========
 
 .. toctree::
    :maxdepth: 2
 
    install
    shell
-   connection
-   node
-   schema
-   custom
-   forms
-   utils
+   modules/index
    testing
 
 Indices and tables

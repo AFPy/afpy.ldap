@@ -1,7 +1,7 @@
 This module is actively used on http://www.afpy.org to manage the french python comunity members.
 
 Get a connection (this custom afpy connection get is configuration from a
-`~/.ldap.ini` file)::
+`~/.ldap.ini` file.)::
 
     >>> from afpy.ldap import custom as ldap
     >>> conn = ldap.get_conn()

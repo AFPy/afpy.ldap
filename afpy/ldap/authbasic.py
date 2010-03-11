@@ -9,6 +9,7 @@ from afpy.ldap import auth
 import os
 
 def make_auth_basic(app, global_config, conn=None, **local_conf):
+    """Paste entry point for auth basic middleware using repoze.what"""
 
     if not conn:
         section = local_conf.get('section', 'ldap')

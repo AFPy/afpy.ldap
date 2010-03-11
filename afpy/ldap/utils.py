@@ -9,7 +9,7 @@ _serializers = []
 def resolve_class(entry_point):
     """Resolve a dotted name:
 
-    .. sourcecode::
+    .. sourcecode:: py
 
         >>> resolve_class('afpy.ldap.custom:User')
         <class 'afpy.ldap.custom.User'>
