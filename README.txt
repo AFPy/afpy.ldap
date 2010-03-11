@@ -1,7 +1,14 @@
 This module is actively used on http://www.afpy.org to manage the french python comunity members.
 
+The following examples show all features of the package. If you just want to
+give it a try in a quickest way read `Installation and configuration
+<https://hg.afpy.org/gawel/afpy.ldap/install.html>`_ from the Sphinx
+documentation.
+
+
 Get a connection (this custom afpy connection get is configuration from a
-`~/.ldap.ini` file.)::
+`~/.ldap.ini` file. See `Installation and configuration
+<https://hg.afpy.org/gawel/afpy.ldap/install.html>`_)::
 
     >>> from afpy.ldap import custom as ldap
     >>> conn = ldap.get_conn()

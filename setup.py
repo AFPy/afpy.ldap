@@ -6,7 +6,7 @@ afpy.ldap
 import os
 from setuptools import setup, find_packages
 
-version = '0.6'
+version = '0.7'
 
 long_description = """%s
 
@@ -53,8 +53,8 @@ afpy.ldap
       [console_scripts]
       ldapsh = afpy.ldap.scripts:main
 
-      [paste.app_factory]
-      main = gp.ldap.wsgi:factory
+      [paste.filter_app_factory]
+      main = afpy.ldap.authbasic:make_auth_basic
       """,
       )
 

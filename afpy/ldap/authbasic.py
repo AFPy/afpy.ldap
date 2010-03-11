@@ -16,19 +16,28 @@ in your paste config file:
 
 .. sourcecode:: ini
 
+    [pipeline:main]
+    pipeline = auth myapp
+
     [filter:auth]
     use = egg:afpy.ldap
     section = afpy
 
     # and if you dont want to use ~/.ldap.cfg
-    #file = %(here)s/ldap.cfg
+    #file = %%(here)s/ldap.cfg
+
+    [app:myapp]
+    ...
+
+You can now retrieve the ldap node in the ``repoze.what`` environ vars and the
+:class:`~afpy.ldap.connection.Connection` in ``environ['%s']``
 
 You can also adapt this code and use your own identifiers/challengers:
 
 .. literalinclude:: ../../afpy/ldap/authbasic.py
    :language: py
 
-"""
+""" % auth.CONNECTION_KEY
 
 def make_auth_basic(app, global_config, conn=None, **local_conf):
     """Paste entry point for auth basic middleware using repoze.what"""

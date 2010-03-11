@@ -27,3 +27,12 @@ Try ``ldapsh`` script (see :doc:`shell`)::
 
   $ ldapsh -s myldap
 
+You can now use the :class:`~afpy.ldap.connection.Connection` class in your own code:
+
+.. sourcecode:: py
+
+    >>> from afpy.ldap.connection import Connection
+    >>> conn = Connection(section='myldap')
+
+Enjoy !
+
