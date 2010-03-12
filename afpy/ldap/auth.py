@@ -21,21 +21,19 @@ class GroupAdapter(BaseSourceAdapter):
 
     def __init__(self, conn):
         self.conn = conn
-        self.klass = conn.user_class
 
     def _get_all_sections(self):
         raise NotImplementedError()
 
     def _get_section_items(self, section):
         raise NotImplementedError()
-        #users = self.conn.view('auth/group_users', key=section)
-        #return [doc['_id'] for doc in users]
 
     def _find_sections(self, hint):
         uid = hint.get('repoze.what.userid')
         if uid and isinstance(uid, basestring):
             user = self.conn.get_user(uid)
-            return user.groups
+            if user:
+                return user.groups
         return []
 
     def _include_items(self, section, items):
@@ -62,7 +60,9 @@ class PermissionAdapter(BaseSourceAdapter):
 
     def _find_sections(self, hint):
         group = self.conn.get_group(hint, node_class=self.conn.group_class)
-        return [v.cn for v in self.conn.get_groups(group.dn) if v.cn]
+        if group:
+            return [v.cn for v in self.conn.get_groups(group.dn) if v.cn]
+        return []
 
     def _include_items(self, section, items):
         raise NotImplementedError()
