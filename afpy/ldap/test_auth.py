@@ -57,9 +57,12 @@ class TestAuth(unittest.TestCase):
             log.warn('afpy_test_user already exist')
             user = ldap.getUser('afpy_test_user')
         user.change_password('toto')
+        self.user = user
+        self.setUpApp()
+
+    def setUpApp(self):
         app = make_auth_basic(application, {}, section='afpy')
         self.app = TestApp(app)
-        self.user = user
 
     def test_request(self):
         resp = self.app.get('/')
@@ -88,15 +91,7 @@ class TestAuth(unittest.TestCase):
 
 class TestAuthAfpy(TestAuth):
 
-    def setUp(self):
-        user = ldap.User('afpy_test_user', attrs=dict(cn='Test User', sn='Test'), conn=conn)
-        try:
-            conn.add(user)
-        except:
-            log.warn('afpy_test_user already exist')
-            user = ldap.getUser('afpy_test_user')
-        user.change_password('toto')
+    def setUpApp(self):
         app = make_auth(application, {}, section='afpy')
         self.app = TestApp(app)
-        self.user = user
 

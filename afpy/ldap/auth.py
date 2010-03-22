@@ -8,9 +8,12 @@ from repoze.who.interfaces import IMetadataProvider
 from repoze.who.interfaces import IAuthenticator
 from afpy.ldap.connection import Connection
 from zope.interface import implements
+import logging
 import os
 
 __doc__ = """This is a set of plugins for repoze.what"""
+
+log = logging.getLogger(__name__)
 
 CONNECTION_KEY = 'afpy.ldap.connection'
 
@@ -29,6 +32,8 @@ class GroupAdapter(BaseSourceAdapter):
     def __init__(self, conn, use_groups=True, **kwargs):
         self.conn = conn
         self.use_groups = as_bool(use_groups)
+        log.warn('GroupAdapter(%r, use_groups=%r, **%r)',
+                    self.conn, self.use_groups, kwargs)
 
     def _get_all_sections(self):
         raise NotImplementedError()
@@ -61,6 +66,8 @@ class PermissionAdapter(BaseSourceAdapter):
     def __init__(self, conn, use_permissions=True, **kwargs):
         self.conn = conn
         self.use_permissions = as_bool(use_permissions)
+        log.warn('PermissionAdapter(%r, use_permissions=%r, **%r)',
+                    self.conn, self.use_permissions, kwargs)
 
     def _get_all_sections(self):
         raise NotImplementedError()
@@ -94,6 +101,7 @@ class Authenticator(object):
 
     def __init__(self, conn):
         self.conn = conn
+        log.warn('Authenticator(%r)', self.conn)
 
     def authenticate(self, environ, identity):
         if CONNECTION_KEY not in environ:
@@ -119,6 +127,7 @@ class MDPlugin(object):
 
     def __init__(self, conn):
         self.conn = conn
+        log.warn('MDPlugin(%r)', self.conn)
 
     def add_metadata(self, environ, identity):
         if CONNECTION_KEY not in environ:

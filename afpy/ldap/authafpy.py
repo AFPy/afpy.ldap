@@ -9,6 +9,9 @@ from repoze.who.plugins.cookie import InsecureCookiePlugin
 from repoze.what.middleware import setup_auth
 from afpy.ldap import custom as ldap
 from afpy.ldap import auth
+import logging
+
+log = logging.getLogger(__name__)
 
 def make_auth(app, global_config, **local_config):
 
@@ -27,9 +30,11 @@ def make_auth(app, global_config, **local_config):
 
     basicauth = BasicAuthPlugin('Private web site')
     if 'auth_basic' in local_config:
+        log.warn('using auth basic')
         identifiers=[("basicauth", basicauth)]
         challengers=[("basicauth", basicauth)]
     else:
+        log.warn('using cookie auth')
         identifiers=[("loginform", loginform), ("_ac", cookie), ("basicauth", basicauth)]
         challengers=[("loginform", loginform)]
 
