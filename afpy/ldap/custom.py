@@ -296,10 +296,12 @@ def main():
         shell.api.to_user_ns('members')
         return ('members', len(members))
 
+
     def callback():
         for f in (expired_members, active_members,
                   all_members, awaiting_payments):
             shell.expose_magic(f)
+        shell.api.to_user_ns('getUser')
         shell.search(Group, '-')
 
     shell(section='afpy', classes=(User, Group), callback=callback)

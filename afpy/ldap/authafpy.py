@@ -13,6 +13,14 @@ import logging
 
 log = logging.getLogger(__name__)
 
+class Authenticator(auth.Authenticator):
+    def authenticate(self, environ, identity):
+        auth.Authenticator.authenticate(self, environ, identity)
+        if 'user' in identity:
+            cn = identity['user'].cn
+            identity['login'] = cn
+            return cn
+
 def make_auth(app, global_config, **local_config):
 
     conn = ldap.get_conn()
@@ -26,7 +34,7 @@ def make_auth(app, global_config, **local_config):
                                  post_logout_url="/login",
                                  rememberer_name="_ac")
 
-    authenticators=[("accounts", auth.Authenticator(conn))]
+    authenticators=[("accounts", Authenticator(conn))]
 
     basicauth = BasicAuthPlugin('Private web site')
     if 'auth_basic' in local_config:
