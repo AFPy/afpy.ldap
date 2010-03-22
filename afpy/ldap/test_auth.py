@@ -15,14 +15,26 @@ def application(environ, start_response):
     if req.path_info == '/auth' and not environ.get('repoze.what.credentials'):
         return exc.HTTPUnauthorized()(environ, start_response)
     if req.path_info == '/secure':
-        body = ''
+
+        ident = environ.get('repoze.who.identity', {})
+        body = 'repoze.who.identity = {\n'
+        for k, v in ident.items():
+            if k.lower() != 'password':
+                body += '    %r: %r,\n' % (k, v)
+        body += '}\n\n'
+
         cred = environ.get('repoze.what.credentials', {})
+        body += 'repoze.what.credentials = {\n'
         for k, v in cred.items():
-            body += '%s: %s\n' % (k, v)
+            body += '    %r: %r,\n' % (k, v)
+        body += '}\n\n'
+
         for group in ('svn', 'bureau', 'other'):
-            body += 'in_group(%r): %s\n' % (group, in_group(group).is_met(environ))
+            body += 'in_group(%r) == %s\n' % (group, in_group(group).is_met(environ))
+
         for perm in ('read', 'write'):
-            body += 'has_permision(%r): %s\n' % (perm, has_permission(perm).is_met(environ))
+            body += 'has_permision(%r) == %s\n' % (perm, has_permission(perm).is_met(environ))
+
         resp.body = body
     return resp(environ, start_response)
 

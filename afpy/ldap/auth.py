@@ -14,13 +14,21 @@ __doc__ = """This is a set of plugins for repoze.what"""
 
 CONNECTION_KEY = 'afpy.ldap.connection'
 
+def as_bool(value):
+    if value in (True, False, 0, 1):
+        return bool(value)
+    if isinstance(value, basestring):
+        if value.lower() in ('true', '1'):
+            return True
+    return False
 
 class GroupAdapter(BaseSourceAdapter):
     """Group adapter.
     """
 
-    def __init__(self, conn):
+    def __init__(self, conn, use_groups=True, **kwargs):
         self.conn = conn
+        self.use_groups = as_bool(use_groups)
 
     def _get_all_sections(self):
         raise NotImplementedError()
@@ -29,11 +37,12 @@ class GroupAdapter(BaseSourceAdapter):
         raise NotImplementedError()
 
     def _find_sections(self, hint):
-        uid = hint.get('repoze.what.userid')
-        if uid and isinstance(uid, basestring):
-            user = self.conn.get_user(uid)
-            if user:
-                return user.groups
+        if self.use_groups:
+            uid = hint.get('repoze.what.userid')
+            if uid and isinstance(uid, basestring):
+                user = self.conn.get_user(uid)
+                if user:
+                    return user.groups
         return []
 
     def _include_items(self, section, items):
@@ -49,8 +58,9 @@ class PermissionAdapter(BaseSourceAdapter):
     """Permission adapter.
     """
 
-    def __init__(self, conn):
+    def __init__(self, conn, use_permissions=True, **kwargs):
         self.conn = conn
+        self.use_permissions = as_bool(use_permissions)
 
     def _get_all_sections(self):
         raise NotImplementedError()
@@ -59,9 +69,13 @@ class PermissionAdapter(BaseSourceAdapter):
         raise NotImplementedError()
 
     def _find_sections(self, hint):
-        group = self.conn.get_group(hint, node_class=self.conn.group_class)
-        if group:
-            return [v.cn for v in self.conn.get_groups(group.dn) if v.cn]
+        if self.use_permissions:
+            group = self.conn.get_group(hint, node_class=self.conn.group_class)
+            if group:
+                rdn = self.conn.group_class.rdn
+                return [getattr(v, rdn, None) \
+                        for v in self.conn.get_groups(group.dn) \
+                        if getattr(v, rdn, None)]
         return []
 
     def _include_items(self, section, items):
@@ -112,7 +126,7 @@ class MDPlugin(object):
         if 'user' not in identity:
             uid = identity['repoze.who.userid']
             if uid:
-                user = conn.get_user(uid)
+                user = self.conn.get_user(uid)
                 if user:
                     identity['user'] = user
 
