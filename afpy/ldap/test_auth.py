@@ -3,9 +3,13 @@ from webtest import TestApp
 from webob import Request, Response, exc
 from afpy.ldap import custom as ldap
 from afpy.ldap.authbasic import make_auth_basic
+from afpy.ldap.authafpy import make_auth
 from repoze.what.predicates import Any, is_user, has_permission, in_group
+import logging
 import unittest
 import base64
+
+log = logging.getLogger('nose')
 
 def application(environ, start_response):
     req = Request(environ)
@@ -47,7 +51,11 @@ class TestAuth(unittest.TestCase):
 
     def setUp(self):
         user = ldap.User('afpy_test_user', attrs=dict(cn='Test User', sn='Test'), conn=conn)
-        conn.add(user)
+        try:
+            conn.add(user)
+        except:
+            log.warn('afpy_test_user already exist')
+            user = ldap.getUser('afpy_test_user')
         user.change_password('toto')
         app = make_auth_basic(application, {}, section='afpy')
         self.app = TestApp(app)
@@ -63,16 +71,32 @@ class TestAuth(unittest.TestCase):
             headers = {'Authorization': 'Basic %s' % encoded}
             resp = self.app.get('/secure', headers=headers)
             resp.mustcontain(
-                "repoze.what.userid: %s" % conn.config.tests.uid,
-                "in_group('svn'): True",
-                "in_group('bureau'): True",
-                "in_group('other'): False",
-                "has_permision('read'): False",
-                "has_permision('write'): False",
+                "'repoze.what.userid': %r" % conn.config.tests.uid,
+                "in_group('svn') == True",
+                "in_group('bureau') == True",
+                "in_group('other') == False",
+                "has_permision('read') == False",
+                "has_permision('write') == False",
                 )
 
     def tearDown(self):
         try:
             conn.delete(self.user)
         except:
+            log.warn('cant delete afpy_test_user')
             pass
+
+class TestAuthAfpy(TestAuth):
+
+    def setUp(self):
+        user = ldap.User('afpy_test_user', attrs=dict(cn='Test User', sn='Test'), conn=conn)
+        try:
+            conn.add(user)
+        except:
+            log.warn('afpy_test_user already exist')
+            user = ldap.getUser('afpy_test_user')
+        user.change_password('toto')
+        app = make_auth(application, {}, section='afpy')
+        self.app = TestApp(app)
+        self.user = user
+

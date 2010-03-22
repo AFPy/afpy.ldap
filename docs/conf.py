@@ -193,7 +193,7 @@ latex_documents = [
 # If false, no module index is generated.
 #latex_use_modindex = True
 
-rstctl_exclude = ['afpy.ldap.ldaputil']
+rstctl_exclude = ['afpy.ldap.ldaputil', 'afpy.ldap.authafpy']
 
 # Custom stuff
 try:

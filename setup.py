@@ -58,6 +58,7 @@ afpy.ldap
 
       [paste.filter_app_factory]
       main = afpy.ldap.authbasic:make_auth_basic
+      afpy = afpy.ldap.authafpy:make_auth
       """,
       )
 
