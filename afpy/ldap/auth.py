@@ -112,7 +112,7 @@ class Authenticator(object):
             login = str(login)
             user = self.conn.get_user(login)
             rdn = self.conn.user_class._rdn
-            if user is not None:
+            if user is not None and password:
                 if user.check(password):
                     uid = str(getattr(user, rdn))
                     identity['login'] = login
