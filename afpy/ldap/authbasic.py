@@ -23,12 +23,12 @@ in your paste config file:
     use = egg:afpy.ldap
     section = afpy
 
-    # uncomment this to enable groups/permissions
-    #use_groups = true
-    #use_permissions = true
+    # uncomment this to disable groups/permissions
+    #use_groups = false
+    #use_permissions = false
 
     # and if you dont want to use ~/.ldap.cfg
-    #file = %%(here)s/ldap.cfg
+    #config = %%(here)s/ldap.cfg
 
     [app:myapp]
     ...
@@ -52,13 +52,11 @@ def make_auth_basic(app, global_config, conn=None, **local_conf):
         config_file = local_conf.get('config', os.path.expanduser('~/.ldap.cfg'))
         conn = Connection(section, filename=config_file)
 
-    authenticator=auth.Authenticator(conn)
-
     basicauth = BasicAuthPlugin('Private web site')
     identifiers=[("basicauth", basicauth)]
     challengers=[("basicauth", basicauth)]
 
-    authenticators=[("accounts", authenticator)]
+    authenticators=[("accounts", auth.Authenticator(conn))]
     groups = {'all_groups': auth.GroupAdapter(conn, **local_conf)}
     permissions = {'all_perms': auth.PermissionAdapter(conn, **local_conf)}
     mdproviders=[("accounts", auth.MDPlugin(conn))]

@@ -34,8 +34,6 @@ def make_auth(app, global_config, **local_config):
                                  post_logout_url="/login",
                                  rememberer_name="_ac")
 
-    authenticators=[("accounts", Authenticator(conn))]
-
     basicauth = BasicAuthPlugin('Private web site')
     if 'auth_basic' in local_config:
         log.warn('using auth basic')
@@ -46,6 +44,7 @@ def make_auth(app, global_config, **local_config):
         identifiers=[("loginform", loginform), ("_ac", cookie), ("basicauth", basicauth)]
         challengers=[("loginform", loginform)]
 
+    authenticators=[("accounts", Authenticator(conn))]
     groups = {'all_groups': auth.GroupAdapter(conn)}
     permissions = {'all_perms': auth.PermissionAdapter(conn, use_permissions=False)}
     mdproviders=[("accounts", auth.MDPlugin(conn))]
