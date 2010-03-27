@@ -235,12 +235,16 @@ class User(Node):
 
     def check(self, password):
         """check credential by binding a new connection"""
-        return self._conn.check(self.dn, password)
+        if password:
+            return self._conn.check(self.dn, password)
 
     def change_password(self, passwd, scheme='ssha', charset='utf-8', multiple=0):
         """allow to change password"""
-        password = UserPassword(self._conn._conn.connect(), self._dn, charset=charset, multiple=multiple)
-        password.changePassword(None, passwd, scheme)
+        if passwd:
+            password = UserPassword(self._conn._conn.connect(),
+                                    self._dn, charset=charset,
+                                    multiple=multiple)
+            password.changePassword(None, passwd, scheme)
 
     @property
     def groups(self):
