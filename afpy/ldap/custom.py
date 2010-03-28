@@ -149,6 +149,12 @@ class User(BaseUser):
         return sorted(payments, key=lambda i: i.paymentDate)
 
     @property
+    def last_payment(self):
+        payments = self.payments
+        if payments:
+            return payments[-1]
+
+    @property
     def email(self):
         """return emailAlias if any or mail"""
         alias = self.emailAlias
@@ -269,6 +275,22 @@ def applyToMembers(callback, filter=None):
         for u in users:
             callback(u)
 
+def add_payment(u, paymentDate, amount=20, comment=''):
+    """Add a payment to u"""
+    p = Payment()
+    paymentDate = [int(x) for x in reversed(paymentDate.split('/'))]
+    paymentDate = datetime.date(*paymentDate)
+    p.paymentDate = paymentDate
+    amount=int(amount)
+    p.paymentAmount=amount
+    if amount == 20:
+        p.paymentObject = PERSONNAL_MEMBERSHIP
+    elif amount == 10:
+        p.paymentObject = STUDENT_MEMBERSHIP
+    p.invoiceReference = comment
+    u.append(p)
+    return p
+
 def main():
     from afpy.ldap.scripts import shell
 
@@ -302,6 +324,7 @@ def main():
                   all_members, awaiting_payments):
             shell.expose_magic(f)
         shell.api.to_user_ns('getUser')
+        shell.api.to_user_ns('add_payment')
         shell.search(Group, '-')
 
     shell(section='afpy', classes=(User, Group), callback=callback)
