@@ -13,7 +13,7 @@ import ldap.ldapobject
 import _ldap
 from ConfigObject import ConfigObject
 from ConfigParser import NoOptionError
-from node import Node, User, GroupOfNames
+from node import Node, User, GroupOfNames, GroupOfUniqueNames
 from ldap.ldapobject import ReconnectLDAPObject
 from afpy.ldap.utils import resolve_class
 import logging
@@ -227,7 +227,14 @@ class Connection(object):
         node_class = node_class or self.group_class
         if base_dn is None:
             base_dn = self.section[self.prefix+'group_dn']
-        filter = '(&(objectClass=groupOfNames)(member=%s))' % dn
+        objectClass = node_class._defaults.get('objectClass', 'groupOfNames')
+        if isinstance(objectClass, (tuple, list)):
+            objectClass = [c for c in objectClass if 'groupof' in c.lower()]
+            if objectClass:
+                objectClass = objectClass[0]
+            else:
+                objectClass = 'groupOfNames'
+        filter = '(&(objectClass=%s)(%s=%s))' % (objectClass, node_class._memberAttr, dn)
         return self.search_nodes(node_class=node_class,
                                  base_dn=base_dn,
                                  scope=ldap.SCOPE_SUBTREE,

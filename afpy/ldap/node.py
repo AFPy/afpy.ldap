@@ -260,13 +260,15 @@ class User(Node):
 class GroupOfNames(Node):
     """base class for group nodes"""
     _rdn = 'cn'
+    _memberAttr = 'member'
+    _defaults = {'objectClass': ['groupOfNames', 'top']}
 
     member = schema.SetProperty('member', title='Members')
     member_nodes = schema.SetOfNodesProperty('member', title='Members', node_class=User)
 
     def __repr__(self):
         return '<%s at %s (%s members)>' % (self.__class__.__name__,
-                                    self.dn, len(self._data.get('member', [])))
+                                    self.dn, len(self.member))
     def pprint(self):
         out = []
         out.append(self.cn)
@@ -275,6 +277,15 @@ class GroupOfNames(Node):
         for u in users:
             out.append(getattr(u, u.rdn))
         return '\n'.join(out)
+
+class GroupOfUniqueNames(GroupOfNames):
+    """base class for group nodes"""
+    _rdn = 'cn'
+    _memberAttr = 'uniqueMember'
+    _defaults = {'objectClass': ['groupOfUniqueNames', 'top']}
+
+    member = schema.SetProperty('uniqueMember', title='Members')
+    member_nodes = schema.SetOfNodesProperty('uniqueMember', title='Members', node_class=User)
 
 class OrganizationalUnit(Node):
     """base class for Organizational Unit nodes"""
