@@ -77,12 +77,12 @@ class PermissionAdapter(BaseSourceAdapter):
 
     def _find_sections(self, hint):
         if self.use_permissions:
+            klass = self.conn.perm_class or self.conn.group_class
             group = self.conn.get_group(hint, node_class=self.conn.group_class)
             if group:
-                rdn = self.conn.group_class.rdn
-                return [getattr(v, rdn, None) \
-                        for v in self.conn.get_groups(group.dn) \
-                        if getattr(v, rdn, None)]
+                rdn = klass.rdn
+                groups = self.conn.get_groups(group.dn, node_class=klass)
+                return [getattr(v, rdn) for v in  groups if getattr(v, rdn, '')]
         return []
 
     def _include_items(self, section, items):

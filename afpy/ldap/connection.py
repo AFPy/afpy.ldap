@@ -107,6 +107,7 @@ class Connection(object):
     node_class = Node
     user_class = User
     group_class = GroupOfNames
+    perm_class = None
     def __init__(self, section='ldap', prefix='ldap.', filename=os.path.expanduser('~/.ldap.cfg')):
         self.config = ConfigObject()
         self.config.read([filename])
@@ -120,7 +121,7 @@ class Connection(object):
         except Exception, e:
             raise e.__class__('Invalid configuration %s - %s' % (section, self.section))
 
-        for name in ('user', 'group', 'node'):
+        for name in ('user', 'group', 'perm', 'node'):
             attr = '%s_class' % name
             klass = self.get('%s_class' % name, None)
             if klass:
