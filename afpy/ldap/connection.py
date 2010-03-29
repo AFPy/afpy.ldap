@@ -227,7 +227,7 @@ class Connection(object):
         node_class = node_class or self.group_class
         if base_dn is None:
             base_dn = node_class.base_dn
-        objectClass = node_class._defaults.get('objectClass', 'groupOfNames')
+        objectClass = node_class._defaults.get('objectClass', ['groupOfNames'])
         if isinstance(objectClass, (tuple, list)):
             objectClass = [c for c in objectClass if 'groupof' in c.lower()]
             if objectClass:
