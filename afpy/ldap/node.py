@@ -10,6 +10,7 @@ import string
 import utils
 import sys
 
+
 class Node(object):
     """A LDAP node. Base class for all LDAP objects:
 
@@ -230,6 +231,7 @@ class Node(object):
                 out.append('%-15.15s : %s' % (enc(title), enc(value)))
         return '\n'.join(out)
 
+
 class User(Node):
     """base class for user nodes"""
 
@@ -257,6 +259,7 @@ class User(Node):
         """return  groups as nodes"""
         return self._conn.get_groups(self._dn)
 
+
 class GroupOfNames(Node):
     """base class for group nodes"""
     _rdn = 'cn'
@@ -278,6 +281,7 @@ class GroupOfNames(Node):
             out.append(getattr(u, u.rdn))
         return '\n'.join(out)
 
+
 class GroupOfUniqueNames(GroupOfNames):
     """groupOfUniqueNames implementation"""
     _rdn = 'cn'
@@ -286,6 +290,7 @@ class GroupOfUniqueNames(GroupOfNames):
 
     member = schema.SetProperty('uniqueMember', title='Members')
     member_nodes = schema.SetOfNodesProperty('uniqueMember', title='Members', node_class=User)
+
 
 class OrganizationalUnit(Node):
     """base class for Organizational Unit nodes"""
