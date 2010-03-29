@@ -6,7 +6,7 @@ afpy.ldap
 import os
 from setuptools import setup, find_packages
 
-version = '0.7'
+version = '0.8'
 
 long_description = """%s
 

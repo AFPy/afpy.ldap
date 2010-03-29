@@ -3,6 +3,8 @@
 
 - small fixes
 
+- add GroupOfUniqueNames
+
 0.7
 ---
 
