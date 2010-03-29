@@ -279,7 +279,7 @@ class GroupOfNames(Node):
         return '\n'.join(out)
 
 class GroupOfUniqueNames(GroupOfNames):
-    """base class for group nodes"""
+    """groupOfUniqueNames implementation"""
     _rdn = 'cn'
     _memberAttr = 'uniqueMember'
     _defaults = {'objectClass': ['groupOfUniqueNames', 'top']}
