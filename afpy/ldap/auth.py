@@ -40,7 +40,14 @@ class BaseAdapter(object):
                 if users and len(users) == 1:
                     return users[0]
             else:
-                return self.conn.get_user(uid)
+                user = self.conn.get_user(uid)
+                if user is not None:
+                    try:
+                        user.normalized_data()
+                    except:
+                        return None
+                    else:
+                        return user
 
 class GroupAdapter(BaseSourceAdapter, BaseAdapter):
     """Group adapter.
