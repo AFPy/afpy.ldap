@@ -33,7 +33,7 @@ afpy.ldap
         "Programming Language :: Python",
         "Topic :: Software Development :: Libraries :: Python Modules",
         ],
-      keywords='ldap',
+      keywords='ldap repoze what',
       author='Gael Pasgrimaud',
       author_email='gael@gawel.org',
       url='http://hg.afpy.org/gawel/afpy.ldap/',
