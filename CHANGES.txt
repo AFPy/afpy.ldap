@@ -1,3 +1,8 @@
+0.8.1
+-----
+
+- fix authentification failure when uid does not exist
+
 0.8
 ---
 
