@@ -56,10 +56,10 @@ def make_auth_basic(app, global_config, conn=None, **local_conf):
     identifiers=[("basicauth", basicauth)]
     challengers=[("basicauth", basicauth)]
 
-    authenticators=[("accounts", auth.Authenticator(conn))]
+    authenticators=[("accounts", auth.Authenticator(conn, **local_conf))]
     groups = {'all_groups': auth.GroupAdapter(conn, **local_conf)}
     permissions = {'all_perms': auth.PermissionAdapter(conn, **local_conf)}
-    mdproviders=[("accounts", auth.MDPlugin(conn))]
+    mdproviders=[("accounts", auth.MDPlugin(conn, **local_conf))]
 
     return setup_auth(app,
                       groups,

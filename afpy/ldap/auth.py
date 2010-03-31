@@ -25,7 +25,24 @@ def as_bool(value):
             return True
     return False
 
-class GroupAdapter(BaseSourceAdapter):
+class BaseAdapter(object):
+
+    use_search = False
+
+    def get_user(self, uid):
+        if uid:
+            if self.use_search:
+                rdn = self.conn.user_class._rdn
+                users = self.conn.search_nodes(
+                            filter='%s=%s' % (rdn, uid),
+                            base_dn=self.conn.base_dn,
+                            node_class=self.conn.user_class)
+                if users and len(users) == 1:
+                    return users[0]
+            else:
+                return self.conn.get_user(uid)
+
+class GroupAdapter(BaseSourceAdapter, BaseAdapter):
     """Group adapter.
     """
 
@@ -35,29 +52,19 @@ class GroupAdapter(BaseSourceAdapter):
         log.warn('GroupAdapter(%r, use_groups=%r, **%r)',
                     self.conn, self.use_groups, kwargs)
 
-    def _get_all_sections(self):
-        raise NotImplementedError()
-
-    def _get_section_items(self, section):
-        raise NotImplementedError()
-
     def _find_sections(self, hint):
         if self.use_groups:
-            uid = hint.get('repoze.what.userid')
-            if uid and isinstance(uid, basestring):
-                user = self.conn.get_user(uid)
-                if user:
-                    return user.groups
+            user = None
+            if 'user' in hint:
+                user = hint['user']
+            else:
+                uid = hint.get('repoze.what.userid', None)
+                if uid and isinstance(uid, basestring):
+                    user = self.get_user(uid)
+            if user:
+                return user.groups
         return []
 
-    def _include_items(self, section, items):
-        raise NotImplementedError()
-
-    def _item_is_included(self, section, item):
-        raise NotImplementedError()
-
-    def _section_exists(self, section):
-        raise NotImplementedError()
 
 class PermissionAdapter(BaseSourceAdapter):
     """Permission adapter.
@@ -69,12 +76,6 @@ class PermissionAdapter(BaseSourceAdapter):
         log.warn('PermissionAdapter(%r, use_permissions=%r, **%r)',
                     self.conn, self.use_permissions, kwargs)
 
-    def _get_all_sections(self):
-        raise NotImplementedError()
-
-    def _get_section_items(self, section):
-        raise NotImplementedError()
-
     def _find_sections(self, hint):
         if self.use_permissions:
             klass = self.conn.perm_class or self.conn.group_class
@@ -85,22 +86,15 @@ class PermissionAdapter(BaseSourceAdapter):
                 return [getattr(v, rdn) for v in  groups if getattr(v, rdn, '')]
         return []
 
-    def _include_items(self, section, items):
-        raise NotImplementedError()
 
-    def _item_is_included(self, section, item):
-        raise NotImplementedError()
-
-    def _section_exists(self, section):
-        raise NotImplementedError()
-
-class Authenticator(object):
+class Authenticator(BaseAdapter):
     """Authenticator plugin.
     """
     implements(IAuthenticator)
 
-    def __init__(self, conn):
+    def __init__(self, conn, use_search=False, **kwargs):
         self.conn = conn
+        self.use_search = use_search
         log.warn('Authenticator(%r)', self.conn)
 
     def authenticate(self, environ, identity):
@@ -108,25 +102,24 @@ class Authenticator(object):
             environ[CONNECTION_KEY] = self.conn
         login = identity.get('login', '')
         password = identity.get('password', '')
-        if login:
-            login = str(login)
-            user = self.conn.get_user(login)
-            rdn = self.conn.user_class._rdn
-            if user is not None and password:
-                if user.check(password):
-                    uid = str(getattr(user, rdn))
-                    identity['login'] = login
-                    identity['rdn'] = uid
-                    identity['user'] = user
-                    return uid
+        user = self.get_user(login)
+        if user is not None and password:
+            if user.check(password):
+                rdn = self.conn.user_class._rdn
+                uid = str(getattr(user, rdn))
+                identity['login'] = login
+                identity['rdn'] = uid
+                identity['user'] = user
+                return uid
 
-class MDPlugin(object):
+class MDPlugin(BaseAdapter):
     """Metadata provider plugin.
     """
     implements(IMetadataProvider)
 
-    def __init__(self, conn):
+    def __init__(self, conn, use_search=False, **kwargs):
         self.conn = conn
+        self.use_search = use_search
         log.warn('MDPlugin(%r)', self.conn)
 
     def add_metadata(self, environ, identity):
@@ -135,7 +128,7 @@ class MDPlugin(object):
         if 'user' not in identity:
             uid = identity['repoze.who.userid']
             if uid:
-                user = self.conn.get_user(uid)
-                if user:
+                user = self.get_user(uid)
+                if user is not None:
                     identity['user'] = user
 
