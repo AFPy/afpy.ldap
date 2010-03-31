@@ -32,6 +32,7 @@ afpy.ldap
       classifiers=[
         "Programming Language :: Python",
         "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: Internet :: WWW/HTTP :: WSGI :: Middleware",
         ],
       keywords='ldap repoze what',
       author='Gael Pasgrimaud',
