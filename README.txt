@@ -62,5 +62,5 @@ The source code can be find on the `AFPy repository`_
 .. _AFPy repository: http://hg.afpy.org/gawel/afpy.ldap/summary
 
 Got a bug, feature request ? Want to send beer because you love it ? Send an
-email at afpy-web@lists.afpy.org
+email at gawel@afpy.org or join us on the #afpy channel on freenode.
 
