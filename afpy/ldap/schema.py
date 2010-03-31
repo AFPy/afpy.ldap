@@ -80,7 +80,10 @@ class Dn(Attribute):
             return self
         if not instance._dn:
             if instance._rdn and instance._base_dn:
-                value = getattr(instance, instance._rdn, None)
+                try:
+                    value = getattr(instance, instance._rdn, None)
+                except ValueError:
+                    return None
                 if value:
                     instance._dn = '%s=%s,%s' % (instance._rdn, value, instance._base_dn)
         if instance._dn and not instance._pk:
@@ -106,7 +109,11 @@ class Property(property):
     def __get__(self, instance, klass):
         if instance is None:
             return self
-        data = instance.normalized_data()
+        try:
+            data = instance.normalized_data()
+        except ValueError:
+            # new node
+            return ''
         value = data.get(self.name)
         return utils.to_python(value, self.klass)
 

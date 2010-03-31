@@ -130,6 +130,8 @@ class Connection(object):
                     setattr(self, attr, klass)
                     self.bind(klass)
                     log.warn('Setting %s to %s', attr, klass)
+        if self.group_class.member_nodes.item_klass is not self.user_class:
+            self.group_class.member_nodes.item_klass = self.user_class
 
     def get(self, key, default=None):
         try:
@@ -184,7 +186,7 @@ class Connection(object):
     def search_nodes(self, node_class=None, **kwargs):
         """like search nut return :class:`~afpy.ldap.node.Node` objects"""
         node_class = node_class or self.node_class
-        return [node_class(r['dn'], attrs=r, conn=self) for r in self.search(**kwargs)]
+        return [node_class(dn=r['dn'], attrs=r, conn=self) for r in self.search(**kwargs)]
 
     def get_dn(self, dn):
         """return search result for dn"""

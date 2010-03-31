@@ -180,6 +180,7 @@ class User(BaseUser):
 class Group(GroupOfNames):
     _rdn = 'cn'
     _base_dn = 'ou=groups,dc=afpy,dc=org'
+    cn = schema.StringProperty('cn', title='cn', required=True)
 
 
 

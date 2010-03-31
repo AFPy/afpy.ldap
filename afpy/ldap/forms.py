@@ -40,7 +40,8 @@ from datetime import datetime
 __all__ = ['Field', 'FieldSet']
 
 class Field(BaseField):
-    """"""
+    """Field for ldap FieldSet"""
+
     def value(self):
         if not self.is_readonly() and self.parent.data is not None:
             v = self._deserialize()
@@ -58,9 +59,14 @@ class Field(BaseField):
             setattr(self.model, self.name, self._deserialize())
 
 class FieldSet(BaseFieldSet):
+    validator = None
     def __init__(self, model, session=None, data=None, prefix=None):
         self._fields = OrderedDict()
         self._render_fields = OrderedDict()
+        if isinstance(model, node.Node):
+            self._original_cls = model.__class__
+        else:
+            self._original_cls = model
         self.model = self.session = None
         BaseFieldSet.rebind(self, model, data=data)
         self.prefix = prefix
@@ -73,6 +79,8 @@ class FieldSet(BaseFieldSet):
             type =  v.__class__.__name__.replace('Property','')
             if type == 'Unicode':
                 type = 'String'
+            elif type == 'SetOfNodes':
+                type = 'Set'
             try:
                 t = getattr(fatypes, type)
             except AttributeError:
@@ -85,14 +93,14 @@ class FieldSet(BaseFieldSet):
                 if v.required:
                     self._fields[k].validators.append(validators.required)
 
-    def bind(self, model, session=None, data=None):
+    def bind(self, model=None, session=None, data=None):
         """Bind to an instance"""
         if not (model or session or data):
             raise Exception('must specify at least one of {model, session, data}')
         if not model:
             if not self.model:
                 raise Exception('model must be specified when none is already set')
-            model = fields._pk(self.model) is None and type(self.model) or self.model
+            model = fields._pk(self.model) is None and self._original_cls or self.model
         # copy.copy causes a stacktrace on python 2.5.2/OSX + pylons.  unable to reproduce w/ simpler sample.
         mr = object.__new__(self.__class__)
         mr.__dict__ = dict(self.__dict__)
@@ -104,7 +112,7 @@ class FieldSet(BaseFieldSet):
                                              [field.bind(mr) for field in self._render_fields.itervalues()]])
         return mr
 
-    def rebind(self, model, session=None, data=None):
+    def rebind(self, model=None, session=None, data=None):
         if model:
             if not isinstance(model, node.Node):
                 try:
@@ -138,9 +146,14 @@ class Grid(BaseGrid, FieldSet):
     errors = property(_get_errors, _set_errors)
 
     def rebind(self, instances=None, session=None, data=None):
-        FieldSet.rebind(data=data)
+        FieldSet.rebind(self, self._original_cls, data=data)
         if instances is not None:
             self.rows = instances
+
+    def bind(self, instances=None, session=None, data=None):
+        mr = FieldSet.bind(self, self._original_cls, session, data)
+        mr.rows = instances
+        return mr
 
     def _set_active(self, instance, session=None):
         FieldSet.rebind(self, instance, session or self.session, self.data)
