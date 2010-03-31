@@ -185,11 +185,7 @@ class Group(GroupOfNames):
 
 def get_conn():
     """return a ldap connection"""
-    class Connection(BaseConnection):
-        """Specific connection"""
-        user_class = User
-        group_class = Group
-    return Connection(section='afpy')
+    return BaseConnection(section='afpy')
 
 def getUser(uid):
     """

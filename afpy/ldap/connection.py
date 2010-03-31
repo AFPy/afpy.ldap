@@ -196,26 +196,17 @@ class Connection(object):
         except:
             raise ValueError(dn)
 
-    def get_user(self, uid, node_class=None):
+
+    def get_user(self, uid_or_dn, node_class=None):
         """return user as :class:`~afpy.ldap.node.User` object"""
         node_class = node_class or self.user_class
-        if '=' in uid:
-            dn = uid
-        elif node_class.rdn and node_class.base_dn:
-            dn = '%s=%s,%s' % (node_class.rdn, uid, node_class.base_dn)
-        else:
-            raise AttributeError("rdn or base_dn not set for %s" % node_class)
+        dn = node_class.build_dn(uid_or_dn)
         return node_class(dn=dn, conn=self)
 
-    def get_group(self, uid, node_class=None):
+    def get_group(self, uid_or_dn, node_class=None):
         """return group as :class:`~afpy.ldap.node.GroupOfNames` object"""
         node_class = node_class or self.group_class
-        if '=' in uid:
-            dn = uid
-        elif node_class.rdn and node_class.base_dn:
-            dn = '%s=%s,%s' % (node_class.rdn, uid, node_class.base_dn)
-        else:
-            raise AttributeError("rdn or base_dn not set for %s" % node_class)
+        dn = node_class.build_dn(uid_or_dn)
         return node_class(dn=dn, conn=self)
 
     def get_node(self, dn, node_class=None):

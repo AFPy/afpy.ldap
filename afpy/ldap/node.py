@@ -76,6 +76,18 @@ class Node(object):
         return props
 
     @classmethod
+    def build_dn(cls, uid):
+        """build a dn for uid from node attributes"""
+        if '=' in uid:
+            dn = uid
+        elif cls.rdn and cls.base_dn:
+            dn = '%s=%s,%s' % (cls.rdn, uid, cls.base_dn)
+        else:
+            raise AttributeError("rdn or base_dn not set for %s" % cls)
+        assert cls.base_dn in dn, "can't build a valid dn"
+        return dn
+
+    @classmethod
     def search(cls, conn=None, filter='(objectClass=*)', **kwargs):
         """search class nodes"""
         options = dict(
