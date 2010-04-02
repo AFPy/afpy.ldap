@@ -39,8 +39,25 @@ from datetime import datetime
 
 __all__ = ['Field', 'FieldSet']
 
+def get_node_options(fs, name):
+    if fs.model.conn:
+        conn = fs.model.conn
+        prop = getattr(fs._original_cls, name)
+        node_class = prop.item_class(fs.model)
+        nodes = conn.search_nodes(base_dn=node_class.base_dn,
+                                  node_class=node_class)
+        return [(n, getattr(n, n.rdn)) for n in nodes]
+    return []
+
 class Field(BaseField):
     """Field for ldap FieldSet"""
+
+    def __init__(self, *args, **kwargs):
+        if kwargs.get('type') == fatypes.List:
+            kwargs['multiple'] = True
+            if 'options' not in kwargs:
+                kwargs['options'] = lambda fs: get_node_options(fs, self.name)
+        BaseField.__init__(self, *args, **kwargs)
 
     def value(self):
         if not self.is_readonly() and self.parent.data is not None:
@@ -57,6 +74,7 @@ class Field(BaseField):
         """Set the attribute's value in `model` to the value given in `data`"""
         if not self.is_readonly():
             setattr(self.model, self.name, self._deserialize())
+
 
 class FieldSet(BaseFieldSet):
     validator = None
@@ -80,7 +98,7 @@ class FieldSet(BaseFieldSet):
             if type == 'Unicode':
                 type = 'String'
             elif type == 'SetOfNodes':
-                type = 'Set'
+                continue
             elif type == 'ListOfGroups':
                 type = 'List'
             elif type == 'ListOfGroupNodes':
@@ -93,7 +111,7 @@ class FieldSet(BaseFieldSet):
                 self.append(Field(name=k, type=t))
                 self[k].set(label=v.title)
                 if v.description:
-                    self[k].set(instruction=v.description)
+                    self[k].set(instructions=v.description)
                 if v.required:
                     self._fields[k].validators.append(validators.required)
 

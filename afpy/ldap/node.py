@@ -262,7 +262,7 @@ class User(Node):
 
 
     groups = schema.ListOfGroupsProperty('groups', title='Groups')
-    groups_nodes = schema.ListOfGroupNodesProperty('groups_nodes', title='Groups')
+    group_nodes = schema.ListOfGroupNodesProperty('group_nodes', title='Groups')
 
 
 class GroupOfNames(Node):
