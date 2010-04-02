@@ -1,3 +1,8 @@
+0.8.2
+------
+
+- Add ListOfGroups and ListOfPerms attributes. Allow to set user.groups = []
+
 0.8.1
 -----
 
