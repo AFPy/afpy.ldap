@@ -213,10 +213,12 @@ class ListOfGroupNodesProperty(ListProperty):
         return getattr(instance.conn, '%s_class' % self._item_class)
 
     def get_instances(self, instance):
+        value = []
         item_class = self.item_class(instance)
-        value = instance.conn.get_groups(instance.dn,
-                                         base_dn=item_class.base_dn,
-                                         node_class=item_class)
+        if instance.conn and item_class.base_dn:
+            value = instance.conn.get_groups(instance._dn,
+                                             base_dn=item_class.base_dn,
+                                             node_class=item_class)
         return value
 
     def __get__(self, instance, klass):
@@ -224,7 +226,6 @@ class ListOfGroupNodesProperty(ListProperty):
             return self
         if not instance.conn:
             return self.klass()
-        item_class = self.item_class(instance)
         return self._to_python(self.get_instances(instance))
 
     def __set__(self, instance, value):

@@ -88,7 +88,7 @@ class Payment(Node):
     paymentDate = schema.DateProperty('paymentDate', title='Date', required=True)
     paymentObject = schema.StringProperty('paymentObject', title='Type', required=True)
     paymentAmount = schema.IntegerProperty('paymentAmount', title='Montant', required=True)
-    invoiceReference = schema.StringProperty('invoiceReference', title='Reference')
+    invoiceReference = schema.UnicodeProperty('invoiceReference', title='Reference')
 
 class User(BaseUser):
     """
