@@ -260,16 +260,9 @@ class User(Node):
                                     multiple=multiple)
             password.changePassword(None, passwd, scheme)
 
-    @property
-    def groups(self):
-        """return groups as string"""
-        groups = self._conn.get_groups(self._dn)
-        return [getattr(g, g.rdn) for g in groups]
 
-    @property
-    def groups_nodes(self):
-        """return  groups as nodes"""
-        return self._conn.get_groups(self._dn)
+    groups = schema.ListOfGroupsProperty('groups', title='Groups')
+    groups_nodes = schema.ListOfGroupNodesProperty('groups_nodes', title='Groups')
 
 
 class GroupOfNames(Node):

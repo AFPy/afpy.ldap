@@ -130,8 +130,8 @@ class Connection(object):
                     setattr(self, attr, klass)
                     self.bind(klass)
                     log.warn('Setting %s to %s', attr, klass)
-        if self.group_class.member_nodes.item_klass is not self.user_class:
-            self.group_class.member_nodes.item_klass = self.user_class
+        if self.group_class.member_nodes.item_class is not self.user_class:
+            self.group_class.member_nodes.item_class = self.user_class
 
     def get(self, key, default=None):
         try:

@@ -148,7 +148,7 @@ class IntegerProperty(Property):
 
 class ListProperty(Property):
     klass = list
-    item_klass = basestring
+    item_class = basestring
 
     def _to_python(self, value, instance=None):
         return self.klass(value)
@@ -172,29 +172,115 @@ class ListProperty(Property):
         if value is None:
             value = self.klass()
         elif not isinstance(value, self.klass):
-            raise TypeError('Value for %s must by %s not %s' % (self.name, self.klass, type(value)))
+            raise TypeError('Value for %s must by %s not %s. Got %s' % (self.name, self.klass, type(value), value))
         for i in value:
-            if not isinstance(i, self.item_klass):
-                raise TypeError('All items of %s must by %s not %s' % (self.name, self.item_klass, type(i)))
+            if not isinstance(i, self.item_class):
+                raise TypeError('All items of %s must by %s not %s' % (self.name, self.item_class, type(i)))
         data[self.name] = self._to_ldap(value, instance)
 
 class SetProperty(ListProperty):
-    klass = list
+    klass = set
 
 class SetOfNodesProperty(SetProperty):
-    item_klass = None
+    item_class = None
 
     def __init__(self, name, title, required=False, node_class=None):
         SetProperty.__init__(self, name, title, required)
         if node_class is None:
             raise TypeError('node_class is required for %s property' % self.__class__.__name__)
-        self.item_klass = node_class
+        self.item_class = node_class
         self.__doc__ = ':class:`~afpy.ldap.schema.%s` for ldap field ``%s``. Contains ``%s`` objects' % (self.__class__.__name__, name, node_class.__name__)
 
     def _to_python(self, value, instance=None):
-        value = self.klass(value or [])
-        return self.klass([self.item_klass(dn=v, conn=instance.conn) for v in value])
+        if instance.conn:
+            value = self.klass(value or [])
+            return self.klass([self.item_class(dn=v, conn=instance.conn) for v in value])
+        else:
+            return self.klass()
 
     def _to_ldap(self, value, instance=None):
         return list([v.dn for v in value])
+
+class ListOfGroupNodesProperty(ListProperty):
+    _item_class = 'group'
+
+    def __init__(self, name, title, required=False):
+        ListProperty.__init__(self, name, title, required)
+        self.__doc__ = ':class:`~afpy.ldap.schema.%s` for ldap field ``%s``. Contains ``%s`` objects' % (
+                                self.__class__.__name__, name, self._item_class.title())
+
+    def item_class(self, instance):
+        return getattr(instance.conn, '%s_class' % self._item_class)
+
+    def get_instances(self, instance):
+        item_class = self.item_class(instance)
+        value = instance.conn.get_groups(instance.dn,
+                                         base_dn=item_class.base_dn,
+                                         node_class=item_class)
+        return value
+
+    def __get__(self, instance, klass):
+        if instance is None:
+            return self
+        if not instance.conn:
+            return self.klass()
+        item_class = self.item_class(instance)
+        return self._to_python(self.get_instances(instance))
+
+    def __set__(self, instance, value):
+        if value is None:
+            value = self.klass()
+        elif not isinstance(value, self.klass):
+            raise TypeError('Value for %s must by %s not %s' % (self.name, self.klass, type(value)))
+        item_class = self.item_class(instance)
+        for i in value:
+            if not isinstance(i, item_class):
+                raise TypeError('All items of %s must by %s not %s' % (self.name, item_class, type(i)))
+        self._to_ldap(value, instance)
+
+    def _to_python(self, value, instance=None):
+        return self.klass(value)
+
+    def _to_ldap(self, value, instance=None):
+        dn = instance.dn
+        groups = self.get_instances(instance)
+        groups = dict([(getattr(g, g.rdn), g) for g in groups])
+        new_groups = dict([(getattr(g, g.rdn), g) for g in value])
+        all_groups = set(new_groups.keys()+groups.keys())
+        for v in all_groups:
+            if v in new_groups and v not in groups:
+                g = new_groups[v]
+                member = g.member
+                member.add(dn)
+                g.member = member
+                g.save()
+            elif v not in new_groups and v in groups:
+                g = groups[v]
+                member = g.member
+                member.remove(dn)
+                g.member = member
+                g.save()
+
+class ListOfGroupsProperty(ListOfGroupNodesProperty):
+
+    def __set__(self, instance, value):
+        new_value = self.klass()
+        if value:
+            item_class = self.item_class(instance)
+            new_value = []
+            for v in set(value):
+                dn = item_class.build_dn(v)
+                new_value.append(item_class(dn=dn, conn=instance.conn))
+            new_value = self.klass(new_value)
+        ListOfGroupNodesProperty.__set__(self, instance, new_value)
+
+    def _to_python(self, value, instance=None):
+        return self.klass([getattr(v, v.rdn) for v in value])
+
+
+class ListOfPermNodesProperty(ListOfGroupNodesProperty):
+    _item_class = 'perm'
+
+class ListOfPermsProperty(ListOfGroupsProperty):
+    _item_class = 'perm'
 

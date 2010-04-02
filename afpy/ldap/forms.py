@@ -81,6 +81,10 @@ class FieldSet(BaseFieldSet):
                 type = 'String'
             elif type == 'SetOfNodes':
                 type = 'Set'
+            elif type == 'ListOfGroups':
+                type = 'List'
+            elif type == 'ListOfGroupNodes':
+                continue
             try:
                 t = getattr(fatypes, type)
             except AttributeError:
