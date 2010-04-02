@@ -155,12 +155,16 @@ class Node(object):
     def normalized_data(self):
         if self._data:
             return self._data
-        if not self._conn:
-            # new instance. node to store data tought
+        if not self._data:
             self._data = {}
+        if not self._conn:
+            # new instance. need to store data thought
             return self._data
-        self._data = {}
-        data = self._conn.get_dn(self._dn)
+        try:
+            data = self._conn.get_dn(self._dn)
+        except ValueError:
+            # new instance. need to store data thought
+            return self._data
         results = data.get('results', {})
         if len(results) == 1:
             for k, v in results[0].items():

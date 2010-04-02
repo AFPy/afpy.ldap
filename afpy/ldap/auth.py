@@ -47,7 +47,7 @@ class BaseAdapter(object):
                     except:
                         return None
                     else:
-                        return user
+                        return user.data and user or None
 
 class GroupAdapter(BaseSourceAdapter, BaseAdapter):
     """Group adapter.

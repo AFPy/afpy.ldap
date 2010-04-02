@@ -198,9 +198,10 @@ def getUser(uid):
     try:
         user.normalized_data()
     except:
-        return None
+        pass
     else:
-        return user
+        if user.data:
+            return user
 
 def getUserByTitle(title):
     conn = get_conn()
