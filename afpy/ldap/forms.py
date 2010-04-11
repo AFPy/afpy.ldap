@@ -43,37 +43,62 @@ def get_node_options(fs, name):
     if fs.model.conn:
         conn = fs.model.conn
         prop = getattr(fs._original_cls, name)
-        node_class = prop.item_class(fs.model)
-        nodes = conn.search_nodes(base_dn=node_class.base_dn,
-                                  node_class=node_class)
-        return [(n, getattr(n, n.rdn)) for n in nodes]
+        item_class = prop.item_class
+        try:
+            item_class = prop.item_class(fs.model)
+        except TypeError:
+            pass
+        try:
+            nodes = conn.search_nodes(base_dn=item_class.base_dn,
+                                      node_class=item_class, attrs=[item_class.rdn])
+        except:
+            return []
+        else:
+            return [(unicode(n), getattr(n, n.rdn)) for n in nodes if getattr(n, n.rdn)]
     return []
 
 class Field(BaseField):
     """Field for ldap FieldSet"""
 
     def __init__(self, *args, **kwargs):
-        if kwargs.get('type') == fatypes.List:
+        if kwargs.get('type') in (fatypes.List, fatypes.Set):
             kwargs['multiple'] = True
             if 'options' not in kwargs:
                 kwargs['options'] = lambda fs: get_node_options(fs, self.name)
+        self._property = kwargs.pop('prop')
         BaseField.__init__(self, *args, **kwargs)
+        if kwargs.get('type') in (fatypes.List, fatypes.Set):
+            self.is_relation = True
 
+    @property
     def value(self):
         if not self.is_readonly() and self.parent.data is not None:
             v = self._deserialize()
             if v is not None:
                 return v
-        return getattr(self.model, self.name, None)
-    value = property(value)
-    def model_value(self):
-        return getattr(self.model, self.name, None)
-    model_value = raw_value = property(model_value)
+        return self.raw_value
+
+    @property
+    def raw_value(self):
+        value = getattr(self.model, self.name, None)
+        if isinstance(value, set):
+            return list(value)
+        return value
 
     def sync(self):
         """Set the attribute's value in `model` to the value given in `data`"""
         if not self.is_readonly():
-            setattr(self.model, self.name, self._deserialize())
+            value = self._deserialize()
+            if hasattr(self._property, 'item_class'):
+                item_class = self._property.item_class
+                try:
+                    item_class = item_class(self.model)
+                except TypeError:
+                    pass
+                value = [item_class(uid) for uid in value]
+            if isinstance(self.type, fatypes.Set):
+                value = set(value)
+            setattr(self.model, self.name, value)
 
 
 class FieldSet(BaseFieldSet):
@@ -98,22 +123,23 @@ class FieldSet(BaseFieldSet):
             if type == 'Unicode':
                 type = 'String'
             elif type == 'SetOfNodes':
-                continue
+                type = 'Set'
             elif type == 'ListOfGroups':
-                type = 'List'
-            elif type == 'ListOfGroupNodes':
                 continue
+            elif type == 'ListOfGroupNodes':
+                type = 'List'
             try:
                 t = getattr(fatypes, type)
             except AttributeError:
                 raise NotImplementedError('%s is not mapped to a type' % v.__class__)
             else:
-                self.append(Field(name=k, type=t))
-                self[k].set(label=v.title)
+                self.append(Field(name=k, type=t, prop=v))
+                field = self[k]
+                field.set(label=v.title)
                 if v.description:
-                    self[k].set(instructions=v.description)
+                    field.set(instructions=v.description)
                 if v.required:
-                    self._fields[k].validators.append(validators.required)
+                    field.validators.append(validators.required)
 
     def bind(self, model=None, session=None, data=None):
         """Bind to an instance"""
