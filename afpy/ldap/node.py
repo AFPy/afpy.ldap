@@ -221,10 +221,10 @@ class Node(object):
         return node._dn != self._dn
 
     def __str__(self):
-        return getattr(self, self.rdn)
+        return getattr(self, str(self.rdn))
 
     def __unicode__(self):
-        return unicode(getattr(self, self.rdn))
+        return unicode(getattr(self, self.rdn), 'utf-8')
 
     def __repr__(self):
         return '<%s at %s>' % (self.__class__.__name__, self.dn)

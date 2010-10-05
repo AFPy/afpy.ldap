@@ -42,7 +42,10 @@ class Attribute(property):
         if instance is None:
             return getattr(klass, '_%s' % self.name, self)
         else:
-            return getattr(instance, '_%s' % self.name, self)
+            value = getattr(instance, '_%s' % self.name, self)
+        if isinstance(value, unicode):
+            value = value.encode('utf-8')
+        return value
 
     def __set__(self, instance, value):
         setattr(instance.__class__, '_%s' % self.name, value)
