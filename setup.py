@@ -47,7 +47,7 @@ afpy.ldap
           'setuptools',
           # -*- Extra requirements: -*-
           'ConfigObject',
-          'dataflake.ldapconnection>0.9',
+          'dataflake.ldapconnection>=1.2',
       ],
       entry_points="""
       # -*- Entry points: -*-

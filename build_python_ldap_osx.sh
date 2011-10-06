@@ -1,16 +1,16 @@
 #!/bin/python
 
 LDAP="2.4.21"
-PYLDAP="2.3.11"
+PYLDAP="2.3.13"
 PYTHON="python2.5"
 
-DIR="$PWD/openldap-$LDAP"
-wget "ftp://ftp.openldap.org/pub/OpenLDAP/openldap-release/openldap-$LDAP.tgz"
+#DIR="$PWD/openldap-$LDAP"
+#wget "ftp://ftp.openldap.org/pub/OpenLDAP/openldap-release/openldap-$LDAP.tgz"
 
-tar xzf openldap-$LDAP.tgz
-cd $DIR
-./configure --enable-bdb=no --enable-hdb=no --prefix=$PWD && make && make install
-cd ..
+#tar xzf openldap-$LDAP.tgz
+#cd $DIR
+#./configure --enable-bdb=no --enable-hdb=no --prefix=$PWD && make && make install
+#cd ..
 
 wget "http://pypi.python.org/packages/source/p/python-ldap/python-ldap-$PYLDAP.tar.gz"
 tar xvf python-ldap-$PYLDAP.tar.gz

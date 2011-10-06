@@ -38,33 +38,6 @@ def test_search():
     assert len(results) == 1, results
 
 def test_credential():
-    user = ldap.get_user(ldap.config.tests.uid)
+    user = ldap.get_user('gawel')
     assert user.check('toto') is False
-
-def test_normalized_data():
-    user = ldap.get_user(ldap.config.tests.uid)
-    assert 'objectClass' in user.normalized_data(), (user.dn, user._data)
-
-def test_user():
-    user = ldap.get_user(ldap.config.tests.uid)
-    assert 'person' in user.objectClass, user._data
-
-    assert user._dn == user.dn, user.dn
-
-    phone = user.homePhone
-    user.homePhone = '+34'
-    assert ldap.save(user) is True, user.save()
-
-    user = ldap.get_user(ldap.config.tests.uid)
-    assert user.homePhone == '+34', user._data
-
-    user.homePhone = phone
-    ldap.save(user)
-
-def test_groups():
-    user = ldap.get_user(ldap.config.tests.uid)
-    assert ldap.config.tests.group in user.groups
-
-    group = ldap.get_group(ldap.config.tests.group)
-    assert user.dn in group.member
 

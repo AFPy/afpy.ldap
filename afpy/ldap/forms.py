@@ -26,7 +26,7 @@ except ImportError:
     raise ImportError('FormAlchemy is required')
 from formalchemy.tables import Grid as BaseGrid
 from formalchemy.fields import Field as BaseField
-from formalchemy.base import SimpleMultiDict
+from formalchemy.forms import SimpleMultiDict
 from formalchemy import fields
 from formalchemy import validators
 from formalchemy import fatypes
@@ -105,6 +105,7 @@ class FieldSet(BaseFieldSet):
     validator = None
     def __init__(self, model, session=None, data=None, prefix=None):
         self._fields = OrderedDict()
+        self._request=None
         self._render_fields = OrderedDict()
         if isinstance(model, node.Node):
             self._original_cls = model.__class__
@@ -112,10 +113,11 @@ class FieldSet(BaseFieldSet):
             self._original_cls = model
         self.model = self.session = None
         BaseFieldSet.rebind(self, model, data=data)
-        self.prefix = prefix
+        self._prefix = prefix
         self.model = model
         self.readonly = False
         self.focus = True
+        self._format=u'%(model)s-%(pk)s-%(name)s'
         self._errors = []
         focus = True
         for k, v in model.properties():
@@ -141,8 +143,9 @@ class FieldSet(BaseFieldSet):
                 if v.required:
                     field.validators.append(validators.required)
 
-    def bind(self, model=None, session=None, data=None):
+    def bind(self, model=None, session=None, data=None, request=None):
         """Bind to an instance"""
+        self._request = request
         if not (model or session or data):
             raise Exception('must specify at least one of {model, session, data}')
         if not model:
