@@ -25,9 +25,9 @@ class AuthTktCookiePlugin(object):
 
         cfg = ConfigObject(filename=os.path.expanduser('~/.afpy.cfg'))
 
-        self.secret = '%s' % cfg.authtkt.secret
+        self.secret = '%s' % cfg.authtkt.shared_secret
         self.timeout = int(cfg.authtkt.timeout)
-        self.cookie_name = cookie_name
+        self.cookie_name = '%s' % cfg.authtkt.cookie_name
 
     # IIdentifier
     def identify(self, environ):
@@ -45,7 +45,7 @@ class AuthTktCookiePlugin(object):
             data = tktauth.validateTicket(self.secret, token,
                                           timeout=self.timeout,
                                           now=time.time(),
-                                          mod_auth_tkt=True)
+                                          mod_auth_tkt=False)
         if not data:
             return None
 
