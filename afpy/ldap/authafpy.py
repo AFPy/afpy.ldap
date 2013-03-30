@@ -39,8 +39,7 @@ class AuthTktCookiePlugin(object):
 
         try:
             token = binascii.a2b_base64(cookie.value)
-        except binascii.Error, e:
-            log.exception(e)
+        except binascii.Error:
             data = None
         else:
             data = tktauth.validateTicket(self.secret, token,
