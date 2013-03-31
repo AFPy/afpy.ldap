@@ -45,7 +45,7 @@ class AuthTktCookiePlugin(object):
             data = tktauth.validateTicket(self.secret, token,
                                           timeout=self.timeout,
                                           now=time.time(),
-                                          mod_auth_tkt=False)
+                                          mod_auth_tkt=True)
         if not data:
             return None
 
@@ -139,11 +139,11 @@ def make_auth(app, global_config, **local_config):
 
     cookie = AuthTktCookiePlugin('__ac')
 
-    loginform = FriendlyFormPlugin(login_form_url="/login",
+    loginform = FriendlyFormPlugin(login_form_url="/membres/login",
                                    login_handler_path="/do_login",
-                                   post_login_url="/login",
-                                   logout_handler_path="/logout",
-                                   post_logout_url="/login",
+                                   post_login_url="/membres/login",
+                                   logout_handler_path="/membres/logout",
+                                   post_logout_url="/membres/login",
                                    rememberer_name="_ac")
 
     basicauth = BasicAuthPlugin('Private web site')
